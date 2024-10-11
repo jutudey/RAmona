@@ -54,11 +54,23 @@ if confirmation == "Y":
     # Step 4: Insert the data into the table using the variable for table name
     df.to_sql(table_name, conn, if_exists='append', index=False)
 
-    # Step 5: Commit the changes and close the connection
+    print(f"Data imported successfully into {table_name} table, excluding the header.")
+
+    # Step 5: Execute the update query to transform EvPetId
+    update_query = """
+    UPDATE VeraPetCarePlans
+    SET EvPetId = printf('%d', CAST(EvPetId AS INTEGER) + 100000)
+    WHERE EvPetId IS NOT NULL;
+    """
+
+    # Step 6: Execute the query
+    cursor.execute(update_query)
+
+    # Step 7: Commit the changes and close the connection
     conn.commit()
     conn.close()
 
-    print(f"Data imported successfully into {table_name} table, excluding the header.")
+    print("EvPetId values have been updated by adding 100000 and stored as text.")
 
 else:
     print('Not imported')
