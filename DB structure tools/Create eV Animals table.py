@@ -1,47 +1,90 @@
 import sqlite3
 
-# Connect to SQLite database (or create it if it doesn't exist)
-conn = sqlite3.connect('ramona_db.db')
+# Path to your SQLite database
+db_file_path = '../ramona_db.db'
 
-# Create a cursor object
+# Connect to the SQLite database
+conn = sqlite3.connect(db_file_path)
 cursor = conn.cursor()
 
-# SQL query to create the table
-create_table_query = '''
-CREATE TABLE IF NOT EXISTS VeraPetCarePlans (
-    _id TEXT,  -- Likely a unique identifier, string type
-    Age TEXT,  -- Age should be an integer
-    Breed TEXT,  -- Breed is a text field
-    Email TEXT,  -- Email is text
-    InitialHealthCheckComplete BOOLEAN,  -- True/False values, likely boolean
-    MonthlySubscriptionPrice REAL,  -- For monetary values
-    MonthlySubscriptionPriceWithoutDiscount REAL,  -- For monetary values
-    OwnerFirstName TEXT,  -- Text field for the owner's first name
-    OwnerLastName TEXT,  -- Text field for the owner's last name
-    OwnerUserID TEXT,  -- User ID, likely a string identifier
-    PetID TEXT,  -- Pet ID, string
-    PetLastUpdatedTime DATETIME,
-    PetName TEXT, 
-    PetPlan TEXT,
-    ProductCode TEXT,  -- Product code, a short string
-    Species TEXT,  -- Species (e.g., Dog, Cat)
-    SubID TEXT,  -- Subscription ID, string
-    SubscriptionStartDate DATETIME,  -- Subscription start date as text, can convert to DATE or DATETIME later
-    SubscriptionStatus INTEGER,  -- Status, possibly a numeric code
-    EvPetId TEXT,  -- Pet ID, likely numeric
-    EvWpmId TEXT,  -- Possibly numeric
-    ActualEvWpmId TEXT,  -- Possibly numeric
-    ActualEvWp TEXT  -- Descriptive code
+# Step 1: Create the SQL query to create the new table with all fields as TEXT
+create_table_query = """
+CREATE TABLE IF NOT EXISTS eV_animals (
+    Animal_ID TEXT,
+    Division TEXT,
+    Animal_Name TEXT,
+    Animal_Weight_Kg REAL,
+    Date_Of_Birth DATE,
+    DOB_Is_Estimated TEXT,
+    Sex TEXT,
+    Has_Passed_Away TEXT,
+    Date_Of_Passing TEXT,
+    Cause_Of_Death TEXT,
+    Caution_Status TEXT,
+    Species TEXT,
+    Breed TEXT,
+    Animal_Colour TEXT,
+    Animal_Notes TEXT,
+    Microchip_Number TEXT,
+    Last_Vaccination_Date DATE,
+    Last_Vaccination_Name TEXT,
+    Next_Vaccination_Due DATE,
+    Next_Vaccination_Name TEXT,
+    Master_Problems TEXT,
+    Last_Visit DATE,
+    Next_Appointment DATE,
+    Animal_Record_Created_At DATE,
+    Animal_Record_Created_By TEXT,
+    Animal_Record_Last_Modified_At DATE,
+    Animal_Code TEXT,
+    Age TEXT,
+    Owner_Business_Name TEXT,
+    Owner_Title TEXT,
+    Owner_First_Name TEXT,
+    Owner_Last_Name TEXT,
+    Owner_Contact_Code TEXT,
+    Is_Business TEXT,
+    Physical_Address_Street_1 TEXT,
+    Physical_Address_Street_2 TEXT,
+    Physical_Address_Suburb_Neighborhood TEXT,
+    Physical_Address_City TEXT,
+    Physical_Address_Postcode TEXT,
+    Physical_Address_State TEXT,
+    Physical_Address_Country TEXT,
+    Postal_Address_Street_1 TEXT,
+    Postal_Address_Street_2 TEXT,
+    Postal_Address_Suburb_Neighborhood TEXT,
+    Postal_Address_City TEXT,
+    Postal_Address_Postcode TEXT,
+    Postal_Address_State TEXT,
+    Postal_Address_Country TEXT,
+    GUID TEXT,
+    Opt_Out_Of_Electronic_Marketing TEXT,
+    Insurance_Supplier TEXT,
+    Insurance_Number TEXT,
+    Referring_Clinic TEXT,
+    Referring_Vet TEXT,
+    Active TEXT,
+    SOC_Due_Next_Month TEXT,
+    Latest_BCS TEXT,
+    Latest_DS TEXT,
+    Latest_Temp TEXT,
+    Email_Addresses TEXT,
+    Home_Email_Address TEXT,
+    Business_Email_Address TEXT,
+    Accounts_Email_Address TEXT,
+    Fax_Numbers TEXT,
+    Mobile_Numbers TEXT,
+    Phone_Numbers TEXT,
+    General_Reminder TEXT
 );
-'''
+"""
 
-# Execute the query to create the table
+# Step 2: Execute the query to create the table
 cursor.execute(create_table_query)
 
-# Commit the changes
+# Step 3: Commit the changes and close the connection
 conn.commit()
-
-# Close the connection
 conn.close()
 
-print("Table 'VeraPetCarePlans' created successfully.")
+print("Table 'eV_animals' created successfully with all fields as TEXT.")
