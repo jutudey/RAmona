@@ -34,9 +34,6 @@ table_name = 'VeraPetCarePlans'
 confirmation = input('Type Y if you want to import ' + most_recent_file + " into " + table_name + " in " + db_file_path + " ?  ")
 
 if confirmation == "Y":
-
-
-
     # Step 1: Load the CSV file into a pandas DataFrame, excluding the header (first row)
     df = pd.read_csv(csv_file_path, header=0)  # The `header=0` argument ensures the first line is treated as column names
 
