@@ -1,7 +1,7 @@
 import sqlite3
 
 # Connect to SQLite database (or create it if it doesn't exist)
-conn = sqlite3.connect('ramona_db.db')
+conn = sqlite3.connect('/Users/arnejohaneriksen/Python/Python Apps/GVAK_RA/ramona_db.db')
 
 # Create a cursor object
 cursor = conn.cursor()
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS VeraPetCarePlans (
     Species TEXT,  -- Species (e.g., Dog, Cat)
     SubID TEXT,  -- Subscription ID, string
     SubscriptionStartDate DATETIME,  -- Subscription start date as text, can convert to DATE or DATETIME later
-    SubscriptionStatus INTEGER,  -- Status, possibly a numeric code
+    SubscriptionStatus Text,  -- Status, possibly a numeric code
     EvPetId TEXT,  -- Pet ID, likely numeric
     EvWpmId TEXT,  -- Possibly numeric
     ActualEvWpmId TEXT,  -- Possibly numeric

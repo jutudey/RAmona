@@ -1,7 +1,7 @@
 import os
 
 # Path to the database file
-db_file_path = 'example.db'
+db_file_path = '/Users/arnejohaneriksen/Python/Python Apps/GVAK_RA/ramona_db.db'
 
 
 confirmation = input('Type Y if you are  sure you want to delete ' + db_file_path + " ? ")
