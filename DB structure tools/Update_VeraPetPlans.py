@@ -5,10 +5,10 @@ import glob
 
 
 # Define the folder to search in
-folder_path = 'Data'
+folder_path = 'data'
 
 # Pattern to match files starting with 'pet-summary-' and ending with '.csv'
-file_pattern = os.path.join(folder_path, 'pet-summary-*.csv')
+file_pattern = os.path.join(folder_path, '*.csv')
 
 # Find all matching files
 matching_files = glob.glob(file_pattern)
@@ -49,7 +49,7 @@ if confirmation == "Y":
     conn.commit()
     conn.close()
 
-    print(f"Data imported successfully into {table_name} table, replacing any previous data.")
+    print(f"data imported successfully into {table_name} table, replacing any previous data.")
 
 else:
     print('not imported')

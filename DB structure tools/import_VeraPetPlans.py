@@ -5,7 +5,7 @@ import glob
 
 
 # Define the folder to search in
-folder_path = 'Data'
+folder_path = 'data'
 
 # Pattern to match files starting with 'pet-summary-' and ending with '.csv'
 file_pattern = os.path.join(folder_path, 'pet-summary-*.csv')
@@ -42,13 +42,13 @@ if confirmation == "Y":
     cursor = conn.cursor()
 
     # Step 3: Insert the data into the table using the variable for table name
-    df.to_sql(table_name, conn, if_exists='append', index=False)
+    df.to_sql(table_name, conn, if_exists='replace', index=False)
 
     # Step 4: Commit the changes and close the connection
     conn.commit()
     conn.close()
 
-    print(f"Data imported successfully into {table_name} table, excluding the header.")
+    print(f"data imported successfully into {table_name} table, excluding the header.")
 
 else:
     print('not imported')
