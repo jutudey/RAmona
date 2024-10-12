@@ -32,7 +32,8 @@ most_recent_file = csv_file_path
 # Define the table name as a variable
 table_name = 'eV_animals'
 
-confirmation = input('Type Y if you want to import ' + most_recent_file + " into " + table_name + " in " + db_file_path + " ?  ")
+# confirmation = input('Type Y if you want to import ' + most_recent_file + " into " + table_name + " in " + db_file_path + " ?  ")
+confirmation = "Y"
 
 if confirmation == "Y":
 
@@ -45,6 +46,19 @@ if confirmation == "Y":
     # }
     # df = pd.read_csv(csv_file_path, header=0, dtype=dtype_dict)  # backup of line from VERA script
     df = pd.read_csv(csv_file_path, header=0)  # Explicitly specify data types
+
+    # Replace spaces with underscores in the column names
+    df.columns = df.columns.str.replace('Physical Address Suburb/Neighborhood', 'Physical_Address_Suburb_Neighborhood')
+    df.columns = df.columns.str.replace('Postal Address Suburb/Neighborhood', 'Postal_Address_Suburb_Neighborhood')
+    df.columns = df.columns.str.replace('Postal Address Suburb/Neighborhood', 'General_Reminder')
+    df.columns = df.columns.str.replace(' ', '_')
+    df.columns = df.columns.str.replace('(kg)', 'Kg')
+    df.columns = df.columns.str.replace('.', '')
+
+
+    print(df.columns)
+    # exit()
+
 
     # Step 2: Connect to the SQLite database
     conn = sqlite3.connect(db_file_path)

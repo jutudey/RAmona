@@ -1,10 +1,10 @@
 import sqlite3
 
 # Path to your SQLite database
-db_file_path = 'example.db'
+db_file_path = '../ramona_db.db'
 
 # Define the table name to delete
-table_name = 'VeraPetCarePlans'
+table_name = 'eV_animals'
 
 confirmation = input('Type Y if you are  sure you want to delete ' + table_name + " from " + db_file_path)
 

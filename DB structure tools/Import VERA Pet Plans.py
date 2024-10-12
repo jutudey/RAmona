@@ -5,28 +5,29 @@ import glob
 
 
 # Define the folder to search in
-folder_path = 'data'
+# folder_path = 'data'
 
-# Pattern to match files starting with 'pet-summary-' and ending with '.csv'
-file_pattern = os.path.join(folder_path, 'pet-summary-*.csv')
-
-# Find all matching files
-matching_files = glob.glob(file_pattern)
-
-# Check if there are any matching files
-if matching_files:
-    # Sort files by their modification time (most recent first)
-    most_recent_file = max(matching_files, key=os.path.getmtime)
-
-    # Output the most recent file path
-    print(f"The most recently added CSV file is: {most_recent_file}")
-else:
-    print("No files matching the pattern 'pet-summary-*.csv' were found.")
+# # Pattern to match files starting with 'pet-summary-' and ending with '.csv'
+# file_pattern = os.path.join(folder_path, 'pet-summary-*.csv')
+#
+# # Find all matching files
+# matching_files = glob.glob(file_pattern)
+#
+# # Check if there are any matching files
+# if matching_files:
+#     # Sort files by their modification time (most recent first)
+#     most_recent_file = max(matching_files, key=os.path.getmtime)
+#
+#     # Output the most recent file path
+#     print(f"The most recently added CSV file is: {most_recent_file}")
+# else:
+#     print("No files matching the pattern 'pet-summary-*.csv' were found.")
 
 
 # Path to your CSV file and SQLite database
+most_recent_file = "/Users/arnejohaneriksen/Python/Python Apps/GVAK_RA/data/pet-summary.csv"
 csv_file_path = most_recent_file
-db_file_path = 'ramona_db.db'
+db_file_path = '../ramona_db.db'
 
 # Define the table name as a variable
 table_name = 'VeraPetCarePlans'

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS eV_animals (
     Animal_ID TEXT,
     Division TEXT,
     Animal_Name TEXT,
-    Animal_Weight_Kg REAL,
+    Animal_Weight_kg REAL,
     Date_Of_Birth DATE,
     DOB_Is_Estimated TEXT,
     Sex TEXT,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS eV_animals (
     Caution_Status TEXT,
     Species TEXT,
     Breed TEXT,
-    Animal_Colour TEXT,
+    AnimalColour TEXT,
     Animal_Notes TEXT,
     Microchip_Number TEXT,
     Last_Vaccination_Date DATE,
@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS eV_animals (
     Fax_Numbers TEXT,
     Mobile_Numbers TEXT,
     Phone_Numbers TEXT,
-    General_Reminder TEXT
+    General TEXT,
+    Reminder TEXT
 );
 """
 
