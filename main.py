@@ -150,6 +150,43 @@ WHERE
     conn.close()
     return df
 
+
+def get_PaymentLinkDetails(customer_id, pet_id):
+    conn = sqlite3.connect('ramona_db.db')
+    query = f'''
+    SELECT
+	paymentLink as "Payment Link",
+    status as "Payment Status",
+    merchantReference as "Merchant Reference",
+    ROUND(CAST(REPLACE(amount, 'GBP ', '') AS REAL), 2) AS "Amount",
+    creationDate,
+	createdBy,
+    shopperEmail,
+
+    CASE
+
+        WHEN merchantReference LIKE '%:%-%-%' THEN
+            SUBSTR(
+                merchantReference,
+                INSTR(merchantReference, ':') + 1,
+                INSTR(SUBSTR(merchantReference, INSTR(merchantReference, '-') + 1), '-') + INSTR(merchantReference, '-') - INSTR(merchantReference, ':') - 1
+            )
+
+        WHEN merchantReference NOT LIKE '%:%' THEN 'No invoice reference'
+        ELSE NULL
+    END AS invoiceReference
+
+FROM adyen_PaymentLinks
+WHERE
+    amount NOT IN ('GBP 0.01', 'GBP 1.00', 'GBP 0.10')
+    AND LENGTH("merchantReference") > 24
+    AND (merchantReference LIKE '%{pet_id}%' OR merchantReference LIKE '%{customer_id}%')
+	
+        '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+
 page1 = "PAYG Invoice Lines"
 page2 = "Case Details by Invoice"
 page3 = "Adyen Links"
@@ -203,9 +240,9 @@ if page == page1:
         mime='text/csv',
     )
 
-# Second page: Hello
+# Second page: Case Details by Invoice ID
 elif page == page2:
-    st.title(page2)
+    # st.title(page2)
 
     # Create 3 columns
     col1, col2, col3 = st.columns(3)
@@ -214,12 +251,6 @@ elif page == page2:
     with col1:
         case_invoice_no = st.text_input('Invoice number', '')
         # case_invoice_no = 422642 # to force look during development
-
-    # with col2:
-    #     client_filter = st.text_input('Filter by Client Contact Code', '')
-    #
-    # with col3:
-    #     animal_filter = st.text_input('Filter by Animal Code', '')
 
     if case_invoice_no:
         # Fetch the first and last name for the defined Invoice number
@@ -235,17 +266,16 @@ elif page == page2:
         # Collect Invoice details
         data = get_invoiceDetails(invoice_no)
 
-        # Collect Payment Links details
-
 
 
         if first_name and last_name:
-            st.subheader(f"Customer: {first_name} {last_name}")
-            st.subheader(f"Pet: {pet_name}")
-            st.markdown(f"**Invoice Date:** {invoice_date}")
-            st.markdown(f"**Customer ID:** {customer_id}")
-            st.markdown(f"**Pet ID:** {pet_id}")
-            st.markdown(f"**Invoice ID:** {invoice_no}")
+            st.header(f"{first_name} {last_name} - {pet_name}")
+
+            with col3:
+                st.markdown(f"**Invoice Date:** {invoice_date}")
+                st.markdown(f"**Customer ID:** {customer_id}")
+                st.markdown(f"**Pet ID:** {pet_id}")
+                st.markdown(f"**Invoice ID:** {invoice_no}")
 
 
 
@@ -254,8 +284,25 @@ elif page == page2:
             height = min(40 * num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows
 
             # Display the filtered results in a scrollable dataframe, remove index column
-            st.write("Displaying filtered results:")
-            st.dataframe(data.reset_index(drop=True), height=height)  # Removed index and compact height of 400px
+            st.markdown("#### Invoice Lines:")
+
+            # st.dataframe(data.reset_index(drop=True), height=height)  # Removed index and compact height of 400px
+            st.markdown(data.to_markdown(index=False), unsafe_allow_html=True)
+
+            # Collect Payment Links details
+            data2 = get_PaymentLinkDetails(customer_id, pet_id)
+
+            # Set height dynamically based on the number of rows
+            num_rows = len(data)
+            height = min(40 * num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows
+
+            # Display the filtered results in a scrollable dataframe, remove index column
+            st.markdown(f"#### Adyen Links associated with this client:""")
+
+            # st.dataframe(data2.reset_index(drop=True), height=height)  # Removed index and compact height of 400px
+            data2['Payment Link'] = data2['Payment Link'].apply(lambda x: f'[Link]({x})')
+            st.markdown(data2.to_markdown(index=False), unsafe_allow_html=True)
+
 
         else:
             st.header("Invoice #422642 not found")
