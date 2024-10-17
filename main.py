@@ -40,6 +40,31 @@ def get_PAYGinvoiceLines():
     conn.close()
     return df
 
+# Function to get invoice details
+def get_invoiceDetails(invoice_id):
+    conn = sqlite3.connect('ramona_db.db')
+    query = f'''
+SELECT     
+	i."Invoice Line ID",
+	i."Product Name",
+	i."Standard Price(incl)",
+	i.DiscountPercentage,
+	i."DiscountValue",
+	i."Total Invoiced (incl)", 
+	i."Discount Name" 
+FROM
+eV_InvoiceLines i
+WHERE
+i."Type" = 'Item'
+AND i."Product Name" IS Not "Subscription Fee"
+AND i."Product Name" IS Not "Cancellation Fee"
+AND (i."Discount Name" not like "% - all"
+OR i."Discount Name" is NULL)
+AND i."Invoice #" = {invoice_id};
+    '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
 
 # Function to get First Name and Last Name for a specific Invoice #
 def get_invoice_name(invoice_number):
@@ -51,7 +76,8 @@ def get_invoice_name(invoice_number):
     "Animal Name",
     "Invoice Date",
     "Client Contact Code",
-    "Animal Code"
+    "Animal Code",
+    "Invoice #"
     FROM eV_InvoiceLines
     WHERE "Invoice #" = {invoice_number}
     '''
@@ -64,7 +90,8 @@ def get_invoice_name(invoice_number):
                 df.iloc[0]['Animal Name'],
                 df.iloc[0]['Invoice Date'],
                 df.iloc[0]['Client Contact Code'],
-                df.iloc[0]['Animal Code']
+                df.iloc[0]['Animal Code'],
+                df.iloc[0]['Invoice #']
                 )
     else:
         return None, None, None, None, None, None
@@ -131,8 +158,8 @@ elif page == page2:
 
     # Add filters in separate columns
     with col1:
-        case_invoice_no = st.text_input('Invoice # you want details about', '')
-        case_invoice_no = 422642 # to force look during development
+        case_invoice_no = st.text_input('Invoice number', '')
+        # case_invoice_no = 422642 # to force look during development
 
     # with col2:
     #     client_filter = st.text_input('Filter by Client Contact Code', '')
@@ -141,15 +168,33 @@ elif page == page2:
     #     animal_filter = st.text_input('Filter by Animal Code', '')
 
     if case_invoice_no:# Fetch the first and last name for the defined Invoice number
-        first_name, last_name, pet_name, invoice_date, customer_id, pet_id = get_invoice_name(case_invoice_no)
+        (first_name,
+         last_name,
+         pet_name,
+         invoice_date,
+         customer_id,
+         pet_id,
+         invoice_no
+         ) = get_invoice_name(case_invoice_no)
 
         if first_name and last_name:
-            st.header(f"Customer: {first_name} {last_name}")
+            st.subheader(f"Customer: {first_name} {last_name}")
             st.subheader(f"Pet: {pet_name}")
             st.write(f"Invoice Date: {invoice_date}")
             st.write(f"Customer ID: {customer_id}")
             st.write(f"Pet ID: {pet_id}")
+            st.write(f"Invoice ID: {invoice_no}")
 
+            # Run the query automatically on page load
+            data = get_invoiceDetails(invoice_no)
+
+            # Set height dynamically based on the number of rows
+            num_rows = len(data)
+            height = min(40 * num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows
+
+            # Display the filtered results in a scrollable dataframe, remove index column
+            st.write("Displaying filtered results:")
+            st.dataframe(data.reset_index(drop=True), height=height)  # Removed index and compact height of 400px
 
         else:
             st.header("Invoice #422642 not found")
