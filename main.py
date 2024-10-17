@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import tabulate
 
 app_name = "RAmona v0.1"
 
@@ -96,11 +97,64 @@ def get_invoice_name(invoice_number):
     else:
         return None, None, None, None, None, None
 
+# Function to get Adyen Payment links with IDs
+def get_PaymentLinks():
+    conn = sqlite3.connect('ramona_db.db')
+    query = '''
+    SELECT
+    id as "Identifier",
+	paymentLink as "Payment Link",
+    status as "Payment Status",
+    merchantReference as "Merchant Reference",
+    ROUND(CAST(REPLACE(amount, 'GBP ', '') AS REAL), 2) AS "Amount",
+    creationDate,
+	createdBy,
+    shopperEmail,
+
+    CASE
+
+        WHEN merchantReference LIKE '%:%-%-%' THEN
+            SUBSTR(
+                merchantReference,
+                INSTR(merchantReference, ':') + 1,
+                INSTR(SUBSTR(merchantReference, INSTR(merchantReference, '-') + 1), '-') + INSTR(merchantReference, '-') - INSTR(merchantReference, ':') - 1
+            )
+
+        WHEN merchantReference NOT LIKE '%:%' THEN 'No invoice reference'
+        ELSE NULL
+    END AS invoiceReference,
+
+    CASE
+
+        WHEN SUBSTR(merchantReference, INSTR(merchantReference, '10'), 6) LIKE '10____'
+             AND SUBSTR(merchantReference, INSTR(merchantReference, '10') + 5, 1) != '-' THEN
+            SUBSTR(merchantReference, INSTR(merchantReference, '10'), 6)
+        ELSE NULL
+    END AS PetID,
+
+    CASE
+
+        WHEN SUBSTR(merchantReference, INSTR(merchantReference, '20'), 6) LIKE '20____'
+             AND SUBSTR(merchantReference, INSTR(merchantReference, '20') + 5, 1) != '-' THEN
+            SUBSTR(merchantReference, INSTR(merchantReference, '20'), 6)
+        ELSE NULL
+    END AS CustomerID
+
+
+FROM adyen_PaymentLinks
+WHERE
+    amount NOT IN ('GBP 0.01', 'GBP 1.00', 'GBP 0.10')
+    AND LENGTH("merchantReference") > 24
+        '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
 
 page1 = "PAYG Invoice Lines"
 page2 = "Case Details by Invoice"
+page3 = "Adyen Links"
 
-pages = [page2, page1]
+pages = [page2, page1, page3]
 
 # Streamlit app with sidebar navigation
 st.sidebar.title(app_name)
@@ -167,7 +221,8 @@ elif page == page2:
     # with col3:
     #     animal_filter = st.text_input('Filter by Animal Code', '')
 
-    if case_invoice_no:# Fetch the first and last name for the defined Invoice number
+    if case_invoice_no:
+        # Fetch the first and last name for the defined Invoice number
         (first_name,
          last_name,
          pet_name,
@@ -177,16 +232,22 @@ elif page == page2:
          invoice_no
          ) = get_invoice_name(case_invoice_no)
 
+        # Collect Invoice details
+        data = get_invoiceDetails(invoice_no)
+
+        # Collect Payment Links details
+
+
+
         if first_name and last_name:
             st.subheader(f"Customer: {first_name} {last_name}")
             st.subheader(f"Pet: {pet_name}")
-            st.write(f"Invoice Date: {invoice_date}")
-            st.write(f"Customer ID: {customer_id}")
-            st.write(f"Pet ID: {pet_id}")
-            st.write(f"Invoice ID: {invoice_no}")
+            st.markdown(f"**Invoice Date:** {invoice_date}")
+            st.markdown(f"**Customer ID:** {customer_id}")
+            st.markdown(f"**Pet ID:** {pet_id}")
+            st.markdown(f"**Invoice ID:** {invoice_no}")
 
-            # Run the query automatically on page load
-            data = get_invoiceDetails(invoice_no)
+
 
             # Set height dynamically based on the number of rows
             num_rows = len(data)
@@ -200,3 +261,48 @@ elif page == page2:
             st.header("Invoice #422642 not found")
 
     st.write("Made by AJ")
+
+# third page: Adyen links
+elif page == page3:
+    st.title(page3)
+
+   # Run the query automatically on page load
+    data = get_PaymentLinks()
+
+    # Create 3 columns for the filters
+    col1, col2, col3 = st.columns(3)
+
+    # Add filters in separate columns
+    with col1:
+        merchant_ref_filter = st.text_input('Search inside the Merchant Reference', '')
+
+    # with col2:
+    #     # client_filter = st.text_input('Filter by Client Contact Code', '')
+    #
+    # with col3:
+    #     # animal_filter = st.text_input('Filter by Animal Code', '')
+
+    # Apply filters on the data dynamically
+    if merchant_ref_filter:
+        data = data[data["Merchant Reference"].astype(str).str.contains(merchant_ref_filter)]
+    # if client_filter:
+    #     data = data[data['Client Contact Code'].astype(str).str.contains(client_filter)]
+    # if animal_filter:
+    #     data = data[data['Animal Code'].astype(str).str.contains(animal_filter)]
+
+
+
+    # Display the filtered results in a scrollable dataframe, remove index column
+    st.write("Displaying filtered results test:")
+    st.dataframe(data.reset_index(drop=True), height=400)  # Removed index and compact height of 400px
+
+    # Export filtered data to CSV
+    csv = data.to_csv(index=False).encode('utf-8')
+
+    # Create export button
+    st.download_button(
+        label="Export filtered data to CSV",
+        data=csv,
+        file_name='filtered_data.csv',
+        mime='text/csv',
+    )
