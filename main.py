@@ -27,7 +27,7 @@ def get_PAYGinvoiceLines():
     i.DiscountPercentage,
     i."DiscountValue",
     i."Discount Name",
-    i."Total Invoiced (incl)" 
+    i."Total Invoiced (incl)"
     FROM
     eV_InvoiceLines i
     WHERE
@@ -36,6 +36,38 @@ def get_PAYGinvoiceLines():
     AND i."Product Name" IS Not "Cancellation Fee"
     AND (i."Discount Name" not like "% - all"
     OR i."Discount Name" is NULL)
+    '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+
+def get_PAYGinvoices():
+    conn = sqlite3.connect('ramona_db.db')
+    query = '''
+    Select     
+    i."Invoice #",
+    i."Invoice Date",
+    i."Client Contact Code",
+    i."First Name",
+    i."Last Name",
+    i."Animal Code",
+    i."Animal Name",
+	SUM(i."Standard Price(incl)") AS "Total Standard Price(incl)",
+    SUM(i.DiscountPercentage) AS "Total Discount Percentage",
+    SUM(i."DiscountValue") AS "Total Discount Value",
+    SUM(i."Total Invoiced (incl)") AS "Total Invoiced (incl)"
+    FROM
+    eV_InvoiceLines i
+    WHERE
+    i."Type" = 'Item'
+    AND i."Product Name" IS Not "Subscription Fee"
+    AND i."Product Name" IS Not "Cancellation Fee"
+    AND (i."Discount Name" not like "% - all"
+    OR i."Discount Name" is NULL)
+	GROUP BY 
+	    i."Invoice #";
+	
+    
     '''
     df = pd.read_sql_query(query, conn)
     conn.close()
@@ -187,17 +219,18 @@ WHERE
     conn.close()
     return df
 
+topPage = "Case Details by Invoice"
 page1 = "PAYG Invoice Lines"
-page2 = "Case Details by Invoice"
 page3 = "Adyen Links"
+page4 = "Unpaid PAYG invoices?"
 
-pages = [page2, page1, page3]
+pages = [topPage, page4, page1, page3]
 
 # Streamlit app with sidebar navigation
 st.sidebar.title(app_name)
 page = st.sidebar.radio("Go to", pages)
 
-# First page: Data Viewer
+# Page: PAYG Invoice Lines
 if page == page1:
     st.title(page1)
 
@@ -240,8 +273,8 @@ if page == page1:
         mime='text/csv',
     )
 
-# Second page: Case Details by Invoice ID
-elif page == page2:
+# Case Details by Invoice ID
+elif page == topPage:
     # st.title(page2)
 
     # Create 3 columns
@@ -267,7 +300,6 @@ elif page == page2:
         data = get_invoiceDetails(invoice_no)
 
 
-
         if first_name and last_name:
             st.header(f"{first_name} {last_name} - {pet_name}")
 
@@ -276,8 +308,6 @@ elif page == page2:
                 st.markdown(f"**Customer ID:** {customer_id}")
                 st.markdown(f"**Pet ID:** {pet_id}")
                 st.markdown(f"**Invoice ID:** {invoice_no}")
-
-
 
             # Set height dynamically based on the number of rows
             num_rows = len(data)
@@ -307,7 +337,6 @@ elif page == page2:
         else:
             st.header("Invoice #422642 not found")
 
-    st.write("Made by AJ")
 
 # third page: Adyen links
 elif page == page3:
@@ -353,3 +382,48 @@ elif page == page3:
         file_name='filtered_data.csv',
         mime='text/csv',
     )
+
+
+# third page: Adyen links
+elif page == page4:
+    st.title(page4)
+
+    # Run the query automatically on page load
+    data = get_PAYGinvoices()
+
+    # Create 3 columns for the filters
+    col1, col2, col3 = st.columns(3)
+
+    # Add filters in separate columns
+    with col1:
+        invoice_filter = st.text_input('Filter by Invoice #', '')
+
+    with col2:
+        client_filter = st.text_input('Filter by Client Contact Code', '')
+
+    with col3:
+        animal_filter = st.text_input('Filter by Animal Code', '')
+
+    # Apply filters on the data dynamically
+    if invoice_filter:
+        data = data[data['Invoice #'].astype(str).str.contains(invoice_filter)]
+    if client_filter:
+        data = data[data['Client Contact Code'].astype(str).str.contains(client_filter)]
+    if animal_filter:
+        data = data[data['Animal Code'].astype(str).str.contains(animal_filter)]
+
+    # Display the filtered results in a scrollable dataframe, remove index column
+    st.write("Displaying filtered results:")
+    st.dataframe(data.reset_index(drop=True), height=400)  # Removed index and compact height of 400px
+
+    # Export filtered data to CSV
+    csv = data.to_csv(index=False).encode('utf-8')
+
+    # Create export button
+    st.download_button(
+        label="Export filtered data to CSV",
+        data=csv,
+        file_name='filtered_data.csv',
+        mime='text/csv',
+    )
+
