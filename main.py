@@ -1,7 +1,7 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
-import tabulate
+from datetime import datetime
 
 app_name = "RAmona v0.1"
 
@@ -111,7 +111,7 @@ def get_invoice_name(invoice_number):
     "Client Contact Code",
     "Animal Code",
     "Invoice #"
-    FROM eV_InvoiceLines
+    FROM eV_InvoiceLines i, 
     WHERE "Invoice #" = {invoice_number}
     '''
     df = pd.read_sql_query(query, conn)
@@ -219,12 +219,13 @@ WHERE
     conn.close()
     return df
 
-topPage = "Case Details by Invoice"
+topPage = "Case Details by Invoice No."
 page1 = "PAYG Invoice Lines"
 page3 = "Adyen Links"
 page4 = "Unpaid PAYG invoices?"
+page5 = "Invoice Status"
 
-pages = [topPage, page4, page1, page3]
+pages = [topPage, page4, page1, page3, page5]
 
 # Streamlit app with sidebar navigation
 st.sidebar.title(app_name)
@@ -338,7 +339,7 @@ elif page == topPage:
             st.header("Invoice #422642 not found")
 
 
-# third page: Adyen links
+# page: Adyen links
 elif page == page3:
     st.title(page3)
 
@@ -384,7 +385,7 @@ elif page == page3:
     )
 
 
-# third page: Adyen links
+# page: PAYG Invoices
 elif page == page4:
     st.title(page4)
 
@@ -426,4 +427,146 @@ elif page == page4:
         file_name='filtered_data.csv',
         mime='text/csv',
     )
+
+# page: Invoice Tracker
+# elif page == page5:
+#     st.title(page5)
+#
+#
+#     # Database connection function
+#     def get_db_connection():
+#         conn = sqlite3.connect('ramona_db.db')
+#         return conn
+#
+#
+#     # Function to fetch all invoices
+#     def get_all_invoices():
+#         conn = get_db_connection()
+#         query = "SELECT * FROM InvoiceStatus"
+#         df = pd.read_sql_query(query, conn)
+#         conn.close()
+#         return df
+#
+#
+#     # Function to update invoice
+#     def update_invoice(invoice_id, status, date_modified, comment):
+#         conn = get_db_connection()
+#         query = '''
+#         UPDATE InvoiceStatus
+#         SET Status = ?, DateModified = ?, Comment = ?
+#         WHERE InvoiceID = ?
+#         '''
+#         conn.execute(query, (status, date_modified, comment, invoice_id))
+#         conn.commit()
+#         conn.close()
+#
+#
+#     # Fetch all invoices
+#     df = get_all_invoices()
+#
+#     # Display the invoices in a select box
+#     invoice_id = st.selectbox("Select Invoice ID", df["InvoiceID"])
+#
+#     # Get the current values for the selected invoice
+#     invoice_data = df[df["InvoiceID"] == invoice_id].iloc[0]
+#
+#     # Input fields for updating the invoice
+#     status = st.text_input("Status", value=invoice_data["Status"])
+#     date_modified = st.text_input("Last Modified", value=invoice_data["DateModified"])
+#     comment = st.text_area("Comment", value=invoice_data["Comment"])
+#
+#     # Button to update the invoice
+#     if st.button("Update Invoice"):
+#         # If DateModified is not updated manually, set it to the current date and time
+#         if not date_modified:
+#             date_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#
+#         # Update the database
+#         update_invoice(invoice_id, status, date_modified, comment)
+#
+#         st.success(f"Invoice {invoice_id} has been updated successfully!")
+#
+#     # Display the current values of the selected invoice
+#     st.write("### Current Invoice Data")
+#     st.write(df[df["InvoiceID"] == invoice_id])
+
+
+# page: Invoice Tracker
+# elif page == page5:
+#     st.title(page5)
+#
+#     import streamlit as st
+#     import sqlite3
+#     import pandas as pd
+#     from datetime import datetime
+#
+#
+#     # Database connection function
+#     def get_db_connection():
+#         conn = sqlite3.connect('ramona_db.db')
+#         return conn
+#
+#
+#     # Function to fetch all invoices
+#     def get_all_invoices():
+#         conn = get_db_connection()
+#         query = "SELECT * FROM InvoiceStatus"
+#         df = pd.read_sql_query(query, conn)
+#         conn.close()
+#         return df
+#
+#
+#     # Function to update invoices in the database
+#     def update_invoices(df):
+#         conn = get_db_connection()
+#         for index, row in df.iterrows():
+#             query = '''
+#             UPDATE InvoiceStatus
+#             SET Status = ?, DateModified = ?, Comment = ?
+#             WHERE InvoiceID = ?
+#             '''
+#             conn.execute(query, (row["Status"], row["DateModified"], row["Comment"], row["InvoiceID"]))
+#         conn.commit()
+#         conn.close()
+#
+#
+#     # Streamlit App
+#     st.title("Invoice Status Updater")
+#
+#     # Fetch all invoices
+#     df = get_all_invoices()
+#
+#     # Create a grid with 4 columns for InvoiceID, Status, DateModified, Comment
+#     st.write("### Editable Invoice Status Table")
+#     edited_df = df.copy()  # Create a copy of the DataFrame to store edited values
+#
+#     # Display table headers
+#     st.write("#### Edit the values and click 'Save Changes'")
+#     cols = st.columns((1, 2, 2, 4))  # Define the width ratio for the 4 columns
+#
+#     # Display the headers for the table
+#     cols[0].write("**Invoice ID**")
+#     cols[1].write("**Status**")
+#     cols[2].write("**Date Modified**")
+#     cols[3].write("**Comment**")
+#
+#     # Display rows with editable fields for Status, DateModified, and Comment
+#     for i in range(len(df)):
+#         cols = st.columns((1, 2, 2, 4))  # Define the width ratio for each row
+#         cols[0].write(df["InvoiceID"][i])  # Display the InvoiceID (non-editable)
+#
+#         # Editable fields for Status, DateModified, and Comment
+#         edited_df.at[i, "Status"] = cols[1].text_input(f"Status_{i}", value=df["Status"][i])
+#         edited_df.at[i, "DateModified"] = cols[2].text_input(f"DateModified_{i}", value=df["DateModified"][i])
+#         edited_df.at[i, "Comment"] = cols[3].text_input(f"Comment_{i}", value=df["Comment"][i])
+#
+#     # Button to save changes
+#     if st.button("Save Changes"):
+#         # Update the database with edited values
+#         update_invoices(edited_df)
+#         st.success("Changes saved successfully!")
+#
+#     # Display the current table
+#     st.write("### Current Invoice Status Table")
+#     st.dataframe(df)
 
