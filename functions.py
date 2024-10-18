@@ -147,3 +147,71 @@ AND i."Invoice #" = {invoice_id};
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
+
+# Collect Invoices
+
+def get_invoices(pet_id):
+    conn = sqlite3.connect('ramona_db.db')
+    query = f'''
+    Select     
+    i."Invoice #",
+    i."Invoice Date",
+    i."Client Contact Code",
+    i."First Name",
+    i."Last Name",
+    i."Animal Code",
+    i."Animal Name",
+	SUM(i."Standard Price(incl)") AS "Total Standard Price(incl)",
+    SUM(i.DiscountPercentage) AS "Total Discount Percentage",
+    SUM(i."DiscountValue") AS "Total Discount Value",
+    SUM(i."Total Invoiced (incl)") AS "Total Invoiced (incl)"
+    FROM
+    eV_InvoiceLines i
+    WHERE
+    i."Type" = 'Item'
+    -- AND i."Product Name" IS Not "Subscription Fee"
+    -- AND i."Product Name" IS Not "Cancellation Fee"
+    -- AND (i."Discount Name" not like "% - all"
+    -- OR i."Discount Name" is NULL)
+	AND i."Animal Code" like {pet_id}
+	GROUP BY 
+	    i."Invoice #";
+
+
+    '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+
+def get_invoices_wo_subsc(pet_id):
+    conn = sqlite3.connect('ramona_db.db')
+    query = f'''
+    Select     
+    i."Invoice #",
+    i."Invoice Date",
+    i."Client Contact Code",
+    i."First Name",
+    i."Last Name",
+    i."Animal Code",
+    i."Animal Name",
+	SUM(i."Standard Price(incl)") AS "Total Standard Price(incl)",
+    SUM(i.DiscountPercentage) AS "Total Discount Percentage",
+    SUM(i."DiscountValue") AS "Total Discount Value",
+    SUM(i."Total Invoiced (incl)") AS "Total Invoiced (incl)"
+    FROM
+    eV_InvoiceLines i
+    WHERE
+    i."Type" = 'Item'
+    AND i."Product Name" IS Not "Subscription Fee"
+    AND i."Product Name" IS Not "Cancellation Fee"
+    -- AND (i."Discount Name" not like "% - all"
+    -- OR i."Discount Name" is NULL)
+	AND i."Animal Code" like {pet_id}
+	GROUP BY 
+	    i."Invoice #";
+
+
+    '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df

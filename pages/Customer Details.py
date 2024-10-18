@@ -4,6 +4,11 @@ import pandas as pd
 import functions
 
 
+app_name = "RAmona v0.1"
+
+# Enable wide mode and set light theme
+st.set_page_config(layout="wide", page_title=app_name)
+
 st.title("Customer Details")
 
 # Create 3 columns for the filters
@@ -113,7 +118,28 @@ if first_name or last_name:
 pet_data = functions.get_pet_details(contact_code)
 if not pet_data.empty:
     st.write("### Pet Details:")
-    st.write(pet_data.to_markdown(index=False), unsafe_allow_html=True)
+    st.markdown(pet_data.to_markdown(index=False), unsafe_allow_html=True)
+    selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'])
+
+    selected_pet_name = pet_data.loc[pet_data['Pet ID'] == selected_pet_id, 'Name'].values[0]
+    st.write(f"### Invoices for {selected_pet_name}")
+
+    incl_subsc = st.radio("Include Subscription invoices", ("No", "Yes"))
+
+    if incl_subsc == "No":
+        payg_invoices = functions.get_invoices_wo_subsc(selected_pet_id)
+        if not payg_invoices.empty:
+            # selected_pet_name = pet_data.loc[pet_data['Pet ID'] == selected_pet_id, 'Name'].values[0]
+            st.markdown(payg_invoices.to_markdown(index=False), unsafe_allow_html=True)
+        else:
+            st.write("All invoices are Subscription invoices.")
+
+    if incl_subsc == "Yes":
+        all_invoices = functions.get_invoices(selected_pet_id)
+        if not all_invoices.empty:
+            st.markdown(all_invoices.to_markdown(index=False), unsafe_allow_html=True)
+        else:
+            st.write("No invoices found for the selected pet.")
 else:
     st.write("No pets found for this customer.")
 
