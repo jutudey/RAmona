@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import functions
 from datetime import datetime
 
 app_name = "RAmona v0.1"

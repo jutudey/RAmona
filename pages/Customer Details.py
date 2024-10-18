@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import functions
 
 
 st.title("Customer Details")
@@ -43,37 +44,49 @@ def get_pet_details(contact_code):
     # Function to get contact details by First Name and Last Name
 
 
-def get_contacts_by_name(first_name, last_name):
-    conn = sqlite3.connect('ramona_db.db')
-    conditions = []
-    if first_name:
-        conditions.append(f'"Contact First Name" LIKE "%{first_name}%"')
-    if last_name:
-        conditions.append(f'"Contact Last Name" LIKE "%{last_name}%"')
-    where_clause = ' AND '.join(conditions)
-    query = f'''
-        SELECT 
-        "Contact Code", 
-        "Contact First Name", 
-        "Contact Last Name"
-        FROM eV_Contacts
-        WHERE {where_clause}
-        '''
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-    # Display contacts if First Name or Last Name is provided
+# def get_contacts_by_name(first_name, last_name):
+#     conn = sqlite3.connect('ramona_db.db')
+#     conditions = []
+#     if first_name:
+#         conditions.append(f'"Contact First Name" LIKE "%{first_name}%"')
+#     if last_name:
+#         conditions.append(f'"Contact Last Name" LIKE "%{last_name}%"')
+#     where_clause = ' AND '.join(conditions)
+#     query = f'''
+#         SELECT
+#         "Contact Code",
+#         "Contact First Name",
+#         "Contact Last Name"
+#         FROM eV_Contacts
+#         WHERE {where_clause}
+#         '''
+#     df = pd.read_sql_query(query, conn)
+#     conn.close()
+#     return df
+#
+#     # Display contacts if First Name or Last Name is provided
 
 
 if first_name or last_name:
-    contacts_data = get_contacts_by_name(first_name, last_name)
+    contacts_data = functions.get_contacts_by_name(first_name, last_name)
     if not contacts_data.empty:
         selected_contact = st.selectbox('Select a Contact:',
                                         contacts_data["Contact Code"].astype(str) + ' - ' + contacts_data[
                                             "Contact First Name"] + ' ' + contacts_data["Contact Last Name"])
         selected_contact_code = selected_contact.split(' - ')[0]
         contact_code = selected_contact_code
+
+        # Display contact details if Contact Code is provided
+        if contact_code:
+            contact_data = functions.get_contact_details(contact_code)
+            if not contact_data.empty:
+                st.write("### Customer Details:")
+                st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
+                st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
+                st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
+            else:
+                st.write("No details found for this Contact Code.")
+
     else:
         st.write("No contacts found with the given name(s).")
 

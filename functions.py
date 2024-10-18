@@ -3,6 +3,44 @@ import sqlite3
 import pandas as pd
 
 
+def get_contacts_by_name(first_name, last_name):
+    conn = sqlite3.connect('ramona_db.db')
+    conditions = []
+    if first_name:
+        conditions.append(f'"Contact First Name" LIKE "%{first_name}%"')
+    if last_name:
+        conditions.append(f'"Contact Last Name" LIKE "%{last_name}%"')
+    where_clause = ' AND '.join(conditions)
+    query = f'''
+        SELECT 
+        "Contact Code", 
+        "Contact First Name", 
+        "Contact Last Name"
+        FROM eV_Contacts
+        WHERE {where_clause}
+        '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+
+def get_contact_details(contact_code):
+    conn = sqlite3.connect('ramona_db.db')
+    query = f'''
+        SELECT 
+        "Contact Code",
+        "Contact First Name", 
+        "Contact Last Name"
+        FROM eV_Contacts
+        WHERE "Contact Code" = {contact_code}
+        '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+
+
+
+# Case Details Functions
+
 def get_PaymentLinkDetails(customer_id, pet_id):
     conn = sqlite3.connect('ramona_db.db')
     query = f'''
