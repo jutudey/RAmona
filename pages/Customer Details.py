@@ -25,25 +25,25 @@ with col3:
 # Function to get pet details by Contact Code
 
 
-def get_pet_details(contact_code):
-    conn = sqlite3.connect('ramona_db.db')
-    query = f'''
-      SELECT 
-        "Animal_Code" as "Pet ID", 
-        "Animal_Name" as "Name", 
-        "Species", 
-        "Breed", 
-        "Animal_Record_Created_At" as "First registered at"
-        FROM eV_animals
-        WHERE "Owner_Contact_Code" = '{contact_code}'
-      '''
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-    # Function to get contact details by First Name and Last Name
-
-
+# def get_pet_details(contact_code):
+#     conn = sqlite3.connect('ramona_db.db')
+#     query = f'''
+#       SELECT
+#         "Animal_Code" as "Pet ID",
+#         "Animal_Name" as "Name",
+#         "Species",
+#         "Breed",
+#         "Animal_Record_Created_At" as "First registered at"
+#         FROM eV_animals
+#         WHERE "Owner_Contact_Code" = '{contact_code}'
+#       '''
+#     df = pd.read_sql_query(query, conn)
+#     conn.close()
+#     return df
+#
+#     # Function to get contact details by First Name and Last Name
+#
+#
 # def get_contacts_by_name(first_name, last_name):
 #     conn = sqlite3.connect('ramona_db.db')
 #     conditions = []
@@ -66,7 +66,7 @@ def get_pet_details(contact_code):
 #
 #     # Display contacts if First Name or Last Name is provided
 
-
+# Search by names
 if first_name or last_name:
     contacts_data = functions.get_contacts_by_name(first_name, last_name)
     if not contacts_data.empty:
@@ -93,22 +93,24 @@ if first_name or last_name:
     # Function to get contact details by Contact Code
 
 
-def get_contact_details(contact_code):
-    conn = sqlite3.connect('ramona_db.db')
-    query = f'''
-        SELECT 
-        "Contact Code",
-        "Contact First Name", 
-        "Contact Last Name"
-        FROM eV_Contacts
-        WHERE "Contact Code" = {contact_code}
-        '''
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
+# def get_contact_details(contact_code):
+#     conn = sqlite3.connect('ramona_db.db')
+#     query = f'''
+#         SELECT
+#         "Contact Code",
+#         "Contact First Name",
+#         "Contact Last Name"
+#         FROM eV_Contacts
+#         WHERE "Contact Code" = {contact_code}
+#         '''
+#     df = pd.read_sql_query(query, conn)
+#     conn.close()
+#     return df
 
 # Get pet details and display in a table
-pet_data = get_pet_details(contact_code)
+
+# Collect Pet details
+pet_data = functions.get_pet_details(contact_code)
 if not pet_data.empty:
     st.write("### Pet Details:")
     st.write(pet_data.to_markdown(index=False), unsafe_allow_html=True)

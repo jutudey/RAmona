@@ -37,6 +37,23 @@ def get_contact_details(contact_code):
     conn.close()
     return df
 
+def get_pet_details(contact_code):
+    conn = sqlite3.connect('ramona_db.db')
+    query = f'''
+      SELECT 
+        "Animal_Code" as "Pet ID", 
+        "Animal_Name" as "Name", 
+        "Species", 
+        "Breed", 
+        "Animal_Record_Created_At" as "First registered at"
+        FROM eV_animals
+        WHERE "Owner_Contact_Code" = '{contact_code}'
+      '''
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+
+    # Function to get contact details by First Name and Last Name
 
 
 # Case Details Functions
