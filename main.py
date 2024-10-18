@@ -231,7 +231,7 @@ page4 = "Unpaid PAYG invoices?"
 page5 = "Invoice Status"
 page6 = "Customer Details"
 
-pages = [topPage, page4, page1, page3, page5, page6]
+pages = [page6, topPage, page4, page1, page3, page5]
 
 # Streamlit app with sidebar navigation
 st.sidebar.title(app_name)
@@ -283,14 +283,23 @@ if page == page1:
 # Page: Customer Details
 if page == page6:
     st.title(page6)
-    # Add a search box for First Name
-    first_name = st.text_input('Enter First Name:', '')
 
-    # Add a search box for Last Name
-    last_name = st.text_input('Enter Last Name:', '')
+    # Create 3 columns for the filters
+    col1, col2, col3 = st.columns(3)
 
-    # Create a text input to search by Contact Code
-    contact_code = st.text_input('Enter Contact Code:', '')
+    # Add filters in separate columns
+    with col1:
+        # Create a text input to search by Contact Code
+        contact_code = st.text_input('Enter Contact Code:', '')
+
+    with col2:
+        # Add a search box for First Name
+        first_name = st.text_input('Enter First Name:', '')
+
+    with col3:
+        # Add a search box for Last Name
+        last_name = st.text_input('Enter Last Name:', '')
+
 
     # Function to get contact details by Contact Code
     def get_contact_details(contact_code):
@@ -346,6 +355,7 @@ if page == page6:
         conn = sqlite3.connect('ramona_db.db')
         query = f'''
         SELECT 
+        "Contact Code",
         "Contact First Name", 
         "Contact Last Name"
         FROM eV_Contacts
@@ -360,7 +370,8 @@ if page == page6:
     if contact_code:
         contact_data = get_contact_details(contact_code)
         if not contact_data.empty:
-            st.write("### Contact Details:")
+            st.write("### Customer Details:")
+            st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
             st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
             st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
         else:
