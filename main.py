@@ -41,6 +41,7 @@ def get_PAYGinvoiceLines():
     conn.close()
     return df
 
+
 def get_PAYGinvoices():
     conn = sqlite3.connect('ramona_db.db')
     query = '''
@@ -66,12 +67,13 @@ def get_PAYGinvoices():
     OR i."Discount Name" is NULL)
 	GROUP BY 
 	    i."Invoice #";
-	
-    
+
+
     '''
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
+
 
 # Function to get invoice details
 def get_invoiceDetails(invoice_id):
@@ -98,6 +100,7 @@ AND i."Invoice #" = {invoice_id};
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
+
 
 # Function to get First Name and Last Name for a specific Invoice #
 def get_invoice_name(invoice_number):
@@ -128,6 +131,7 @@ def get_invoice_name(invoice_number):
                 )
     else:
         return None, None, None, None, None, None
+
 
 # Function to get Adyen Payment links with IDs
 def get_PaymentLinks():
@@ -213,23 +217,101 @@ WHERE
     amount NOT IN ('GBP 0.01', 'GBP 1.00', 'GBP 0.10')
     AND LENGTH("merchantReference") > 24
     AND (merchantReference LIKE '%{pet_id}%' OR merchantReference LIKE '%{customer_id}%')
-	
+
         '''
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
+
 
 topPage = "Case Details by Invoice No."
 page1 = "PAYG Invoice Lines"
 page3 = "Adyen Links"
 page4 = "Unpaid PAYG invoices?"
 page5 = "Invoice Status"
+page6 = "Customer Details"
 
-pages = [topPage, page4, page1, page3, page5]
+pages = [topPage, page4, page1, page3, page5, page6]
 
 # Streamlit app with sidebar navigation
 st.sidebar.title(app_name)
 page = st.sidebar.radio("Go to", pages)
+
+# Page: PAYG Invoice Lines
+if page == page1:
+    st.title(page1)
+
+    # Run the query automatically on page load
+    data = get_PAYGinvoiceLines()
+
+    # Create 3 columns for the filters
+    col1, col2, col3 = st.columns(3)
+
+    # Add filters in separate columns
+    with col1:
+        invoice_filter = st.text_input('Filter by Invoice #', '')
+
+    with col2:
+        client_filter = st.text_input('Filter by Client Contact Code', '')
+
+    with col3:
+        animal_filter = st.text_input('Filter by Animal Code', '')
+
+    # Apply filters on the data dynamically
+    if invoice_filter:
+        data = data[data['Invoice #'].astype(str).str.contains(invoice_filter)]
+    if client_filter:
+        data = data[data['Client Contact Code'].astype(str).str.contains(client_filter)]
+    if animal_filter:
+        data = data[data['Animal Code'].astype(str).str.contains(animal_filter)]
+
+    # Display the filtered results in a scrollable dataframe, remove index column
+    st.write("Displaying filtered results:")
+    st.dataframe(data.reset_index(drop=True), height=400)  # Removed index and compact height of 400px
+
+    # Export filtered data to CSV
+    csv = data.to_csv(index=False).encode('utf-8')
+
+    # Create export button
+    st.download_button(
+        label="Export filtered data to CSV",
+        data=csv,
+        file_name='filtered_data.csv',
+        mime='text/csv',
+    )
+
+# Page: Customer Details
+elif page == page6:
+    st.title(page6)
+
+    # Create a text input to search by Contact Code
+    contact_code = st.text_input('Enter Contact Code:', '')
+
+
+    # Function to get contact details by Contact Code
+    def get_contact_details(contact_code):
+        conn = sqlite3.connect('ramona_db.db')
+        query = f'''
+        SELECT 
+        "Contact First Name", 
+        "Contact Last Name"
+        FROM eV_Contacts
+        WHERE "Contact Code" = {contact_code}
+        '''
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        return df
+
+
+    # Display contact details if Contact Code is provided
+    if contact_code:
+        contact_data = get_contact_details(contact_code)
+        if not contact_data.empty:
+            st.write("### Contact Details:")
+            st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
+            st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
+        else:
+            st.write("No details found for this Contact Code.")
 
 # Page: PAYG Invoice Lines
 if page == page1:
@@ -300,7 +382,6 @@ elif page == topPage:
         # Collect Invoice details
         data = get_invoiceDetails(invoice_no)
 
-
         if first_name and last_name:
             st.header(f"{first_name} {last_name} - {pet_name}")
 
@@ -343,7 +424,7 @@ elif page == topPage:
 elif page == page3:
     st.title(page3)
 
-   # Run the query automatically on page load
+    # Run the query automatically on page load
     data = get_PaymentLinks()
 
     # Create 3 columns for the filters
@@ -366,8 +447,6 @@ elif page == page3:
     #     data = data[data['Client Contact Code'].astype(str).str.contains(client_filter)]
     # if animal_filter:
     #     data = data[data['Animal Code'].astype(str).str.contains(animal_filter)]
-
-
 
     # Display the filtered results in a scrollable dataframe, remove index column
     st.write("Displaying filtered results test:")
@@ -427,146 +506,3 @@ elif page == page4:
         file_name='filtered_data.csv',
         mime='text/csv',
     )
-
-# page: Invoice Tracker
-# elif page == page5:
-#     st.title(page5)
-#
-#
-#     # Database connection function
-#     def get_db_connection():
-#         conn = sqlite3.connect('ramona_db.db')
-#         return conn
-#
-#
-#     # Function to fetch all invoices
-#     def get_all_invoices():
-#         conn = get_db_connection()
-#         query = "SELECT * FROM InvoiceStatus"
-#         df = pd.read_sql_query(query, conn)
-#         conn.close()
-#         return df
-#
-#
-#     # Function to update invoice
-#     def update_invoice(invoice_id, status, date_modified, comment):
-#         conn = get_db_connection()
-#         query = '''
-#         UPDATE InvoiceStatus
-#         SET Status = ?, DateModified = ?, Comment = ?
-#         WHERE InvoiceID = ?
-#         '''
-#         conn.execute(query, (status, date_modified, comment, invoice_id))
-#         conn.commit()
-#         conn.close()
-#
-#
-#     # Fetch all invoices
-#     df = get_all_invoices()
-#
-#     # Display the invoices in a select box
-#     invoice_id = st.selectbox("Select Invoice ID", df["InvoiceID"])
-#
-#     # Get the current values for the selected invoice
-#     invoice_data = df[df["InvoiceID"] == invoice_id].iloc[0]
-#
-#     # Input fields for updating the invoice
-#     status = st.text_input("Status", value=invoice_data["Status"])
-#     date_modified = st.text_input("Last Modified", value=invoice_data["DateModified"])
-#     comment = st.text_area("Comment", value=invoice_data["Comment"])
-#
-#     # Button to update the invoice
-#     if st.button("Update Invoice"):
-#         # If DateModified is not updated manually, set it to the current date and time
-#         if not date_modified:
-#             date_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-#
-#         # Update the database
-#         update_invoice(invoice_id, status, date_modified, comment)
-#
-#         st.success(f"Invoice {invoice_id} has been updated successfully!")
-#
-#     # Display the current values of the selected invoice
-#     st.write("### Current Invoice Data")
-#     st.write(df[df["InvoiceID"] == invoice_id])
-
-
-# page: Invoice Tracker
-# elif page == page5:
-#     st.title(page5)
-#
-#     import streamlit as st
-#     import sqlite3
-#     import pandas as pd
-#     from datetime import datetime
-#
-#
-#     # Database connection function
-#     def get_db_connection():
-#         conn = sqlite3.connect('ramona_db.db')
-#         return conn
-#
-#
-#     # Function to fetch all invoices
-#     def get_all_invoices():
-#         conn = get_db_connection()
-#         query = "SELECT * FROM InvoiceStatus"
-#         df = pd.read_sql_query(query, conn)
-#         conn.close()
-#         return df
-#
-#
-#     # Function to update invoices in the database
-#     def update_invoices(df):
-#         conn = get_db_connection()
-#         for index, row in df.iterrows():
-#             query = '''
-#             UPDATE InvoiceStatus
-#             SET Status = ?, DateModified = ?, Comment = ?
-#             WHERE InvoiceID = ?
-#             '''
-#             conn.execute(query, (row["Status"], row["DateModified"], row["Comment"], row["InvoiceID"]))
-#         conn.commit()
-#         conn.close()
-#
-#
-#     # Streamlit App
-#     st.title("Invoice Status Updater")
-#
-#     # Fetch all invoices
-#     df = get_all_invoices()
-#
-#     # Create a grid with 4 columns for InvoiceID, Status, DateModified, Comment
-#     st.write("### Editable Invoice Status Table")
-#     edited_df = df.copy()  # Create a copy of the DataFrame to store edited values
-#
-#     # Display table headers
-#     st.write("#### Edit the values and click 'Save Changes'")
-#     cols = st.columns((1, 2, 2, 4))  # Define the width ratio for the 4 columns
-#
-#     # Display the headers for the table
-#     cols[0].write("**Invoice ID**")
-#     cols[1].write("**Status**")
-#     cols[2].write("**Date Modified**")
-#     cols[3].write("**Comment**")
-#
-#     # Display rows with editable fields for Status, DateModified, and Comment
-#     for i in range(len(df)):
-#         cols = st.columns((1, 2, 2, 4))  # Define the width ratio for each row
-#         cols[0].write(df["InvoiceID"][i])  # Display the InvoiceID (non-editable)
-#
-#         # Editable fields for Status, DateModified, and Comment
-#         edited_df.at[i, "Status"] = cols[1].text_input(f"Status_{i}", value=df["Status"][i])
-#         edited_df.at[i, "DateModified"] = cols[2].text_input(f"DateModified_{i}", value=df["DateModified"][i])
-#         edited_df.at[i, "Comment"] = cols[3].text_input(f"Comment_{i}", value=df["Comment"][i])
-#
-#     # Button to save changes
-#     if st.button("Save Changes"):
-#         # Update the database with edited values
-#         update_invoices(edited_df)
-#         st.success("Changes saved successfully!")
-#
-#     # Display the current table
-#     st.write("### Current Invoice Status Table")
-#     st.dataframe(df)
-
