@@ -337,18 +337,22 @@ if page == page6:
         return df
 
 
-    # Display contacts if First Name or Last Name is provided
-    if first_name or last_name:
-        contacts_data = get_contacts_by_name(first_name, last_name)
-        if not contacts_data.empty:
-            selected_contact = st.selectbox('Select a Contact:',
-                                            contacts_data["Contact Code"].astype(str) + ' - ' + contacts_data[
-                                                "Contact First Name"] + ' ' + contacts_data["Contact Last Name"])
-            selected_contact_code = selected_contact.split(' - ')[0]
-            contact_code = selected_contact_code
-        else:
-            st.write("No contacts found with the given name(s).")
-
+    # Function to get pet details by Contact Code
+    def get_pet_details(contact_code):
+        conn = sqlite3.connect('ramona_db.db')
+        query = f'''
+        SELECT 
+        "Animal_Code" as "Pet ID", 
+        "Animal_Name" as "Name", 
+        "Species", 
+        "Breed", 
+        "Animal_Record_Created_At" as "First registered at"
+        FROM eV_animals
+        WHERE "Owner_Contact_Code" = '{contact_code}'
+        '''
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        return df
 
     # Function to get contact details by Contact Code
     def get_contact_details(contact_code):
@@ -366,6 +370,19 @@ if page == page6:
         return df
 
 
+    # Display contacts if First Name or Last Name is provided
+    if first_name or last_name:
+        contacts_data = get_contacts_by_name(first_name, last_name)
+        if not contacts_data.empty:
+            selected_contact = st.selectbox('Select a Contact:',
+                                            contacts_data["Contact Code"].astype(str) + ' - ' + contacts_data[
+                                                "Contact First Name"] + ' ' + contacts_data["Contact Last Name"])
+            selected_contact_code = selected_contact.split(' - ')[0]
+            contact_code = selected_contact_code
+        else:
+            st.write("No contacts found with the given name(s).")
+
+
     # Display contact details if Contact Code is provided
     if contact_code:
         contact_data = get_contact_details(contact_code)
@@ -376,6 +393,16 @@ if page == page6:
             st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
         else:
             st.write("No details found for this Contact Code.")
+
+    # Get pet details and display in a table
+    pet_data = get_pet_details(contact_code)
+    if not pet_data.empty:
+        st.write("### Pet Details:")
+        st.write(pet_data.to_markdown(index=False), unsafe_allow_html=True)
+    else:
+        st.write("No pets found for this customer.")
+
+
 
 # Page: PAYG Invoice Lines
 if page == page1:
