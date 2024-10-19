@@ -74,7 +74,7 @@ pet_data = functions.get_pet_details(contact_code)
 if not pet_data.empty:
     st.write("### Pet Details:")
     st.markdown(pet_data.to_markdown(index=False), unsafe_allow_html=True)
-    selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'])
+    selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'], horizontal=True)
 
     selected_pet_name = pet_data.loc[pet_data['Pet ID'] == selected_pet_id, 'Name'].values[0]
     st.write(f"### Invoices for {selected_pet_name}")
