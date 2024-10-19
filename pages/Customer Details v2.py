@@ -9,7 +9,7 @@ app_name=functions.set_page_definitition()
 st.title("Customer Details")
 
 # Streamlit app with sidebar navigation
-st.sidebar.title(app_name)
+# st.sidebar.title(app_name)
 
 st.sidebar.subheader("Search for client")
 
@@ -50,30 +50,21 @@ if first_name or last_name:
 
 
 
-# def get_contact_details(contact_code):
-#     conn = sqlite3.connect('ramona_db.db')
-#     query = f'''
-#         SELECT
-#         "Contact Code",
-#         "Contact First Name",
-#         "Contact Last Name"
-#         FROM eV_Contacts
-#         WHERE "Contact Code" = {contact_code}
-#         '''
-#     df = pd.read_sql_query(query, conn)
-#     conn.close()
-#     return df
-
-# Get pet details and display in a table
-
 # Collect Pet details
 pet_data = functions.get_pet_details(contact_code)
+print(pet_data)
+
 if not pet_data.empty:
     st.write("### Pet Details:")
     st.markdown(pet_data.to_markdown(index=False), unsafe_allow_html=True)
-    selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'], horizontal=True)
+    if len(pet_data)>1:
+        selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'], horizontal=True)
+    else:
+        selected_pet_id = pet_data['Pet ID'].values[0]
 
     selected_pet_name = pet_data.loc[pet_data['Pet ID'] == selected_pet_id, 'Name'].values[0]
+    print(selected_pet_name)
+    print(selected_pet_id)
     st.write(f"### Invoices for {selected_pet_name}")
 
     incl_subsc = st.radio("Include Subscription invoices", ("No", "Yes"))
