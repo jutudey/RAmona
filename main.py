@@ -4,10 +4,7 @@ import pandas as pd
 import functions
 from datetime import datetime
 
-app_name = "RAmona v0.1"
-
-# Enable wide mode and set light theme
-st.set_page_config(layout="wide", page_title=app_name)
+app_name = functions.set_page_definitition()
 
 
 # Function to query the database

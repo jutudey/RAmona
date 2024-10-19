@@ -1,6 +1,8 @@
 import streamlit as st
 import functions
 
+functions.set_page_definitition()
+
 # def get_PaymentLinkDetails(customer_id, pet_id):
 #     conn = sqlite3.connect('ramona_db.db')
 #     query = f'''

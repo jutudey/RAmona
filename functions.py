@@ -1,7 +1,19 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+from PIL import Image
 
+def set_page_definitition():
+    app_name = "RAmona v0.1"
+
+    # Loading Image using PIL
+    icon = Image.open('content/Subsidiary Salmon Logo.png')
+
+    # Enable wide mode and set light theme and add tab icon
+    st.set_page_config(layout="wide", page_title=app_name, page_icon=icon, initial_sidebar_state="expanded")
+    # st.set_page_config(layout="wide", page_title=app_name, page_icon=":material/sound_detection_dog_barking:", initial_sidebar_state="expanded")
+
+    return app_name
 
 def get_contacts_by_name(first_name, last_name):
     conn = sqlite3.connect('ramona_db.db')
