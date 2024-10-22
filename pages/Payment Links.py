@@ -15,13 +15,10 @@ app_name=functions.set_page_definitition()
 PaymentLinks = "data/paymentLinks-2024-10-22.csv"
 df1 = functions.load_cvs_data(PaymentLinks)
 
-# identifies links created in Adyen as PAYG
-df1['Link Type'] = df1['createdBy'].apply(lambda x: 'PAYG - Adyen' if pd.notna(x) else None)
-
 # identifes VERA Toolbox links as PAYG
 def set_link_type(row):
     if pd.notna(row['createdBy']):
-        return 'PAYG - Vera Toolbox'
+        return 'PAYG - Vera Adyen'
     if isinstance(row['merchantReference'], str) and re.search(r"[ _-]", row['merchantReference']):
         return 'PAYG - Vera Toolbox'
     return None
@@ -31,12 +28,12 @@ df1['Link Type'] = df1.apply(set_link_type, axis=1)
 
 df1['Link Type'] = df1['Link Type'].fillna('Failed Subscription')
 
+# Only PAYG links
+df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 
 st.subheader("Adyen Payment Links")
 st.dataframe(df1)
 st.write(len(df1))
-
-
 
 #----------------------------------------------------
 # Import Xero PAYG invoices
@@ -44,8 +41,6 @@ st.write(len(df1))
 
 XeroInvoices = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
 df2 = functions.load_xero_data(XeroInvoices)
-
-
 
 # Cleaning up the ref ID
 # Define a helper function
@@ -65,8 +60,11 @@ st.subheader("Xero PAYG invoices")
 st.dataframe(df2)
 st.write(len(df2))
 
-# All invoices that are in both
+#----------------------------------------------------
+# Merging tables
+#----------------------------------------------------
 
+# All PAYG links that are in both
 in_both = df1.merge(df2, how='inner', left_on='id', right_on='Adyen Ref ID')
 st.dataframe(in_both)
 st.write(len(in_both))
