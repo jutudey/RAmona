@@ -35,7 +35,7 @@ def process_reference(value):
 df2['Adyen Ref ID'] = df2['Reference'].apply(process_reference)
 
 # add VAT to the amount
-df2['Amount (incl VAT)'] = df2['Credit (Source)'] * 1.20
+df2['Amount (incl VAT)'] = (df2['Credit (Source)'] * 1.20).round(2)
 
 st.subheader("Xero PAYG invoices")
 st.dataframe(df2)
@@ -53,3 +53,6 @@ in_both_display = in_both[["Invoice Number", "status", "creationDate", "amount",
 st.dataframe(in_both_display)
 st.write(len(in_both_display))
 
+df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])
+st.dataframe(df_not_in_df2)
+st.write(len(df_not_in_df2))
