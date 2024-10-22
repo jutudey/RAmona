@@ -235,5 +235,8 @@ def load_cvs_data(file_path):
   return df
 
 def load_xero_data(file_path):
-    return pd.read_excel(file_path, skiprows=4, header=0).drop([0, 1])
+    df = pd.read_excel(file_path, skiprows=4, header=0).drop([0, 1])
+    df = df[~df['Date'].isin(["Total PetCare Advanced PAYG", "Total PAYG Income", "Total", "PetCare Advanced PAYG"])]
+    df = df.dropna(how='all')
 
+    return df

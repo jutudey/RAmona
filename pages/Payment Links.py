@@ -21,6 +21,8 @@ st.write(len(df1))
 XeroInvoices = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
 df2 = functions.load_xero_data(XeroInvoices)
 
+
+
 # Cleaning up the ref ID
 # Define a helper function
 def process_reference(value):
@@ -41,6 +43,13 @@ st.write(len(df2))
 
 # All invoices that are in both
 
-result = df1.merge(df2, how='inner', left_on='id', right_on='Adyen Ref ID')
-st.dataframe(result)
-st.write(len(result))
+in_both = df1.merge(df2, how='inner', left_on='id', right_on='Adyen Ref ID')
+st.dataframe(in_both)
+st.write(len(in_both))
+
+st.subheader("Easily matched")
+
+in_both_display = in_both[["Invoice Number", "status", "creationDate", "amount", "Description"]]
+st.dataframe(in_both_display)
+st.write(len(in_both_display))
+
