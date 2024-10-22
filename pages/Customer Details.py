@@ -4,26 +4,23 @@ import pandas as pd
 import functions
 from PIL import Image
 
-
-functions.set_page_definitition()
+app_name=functions.set_page_definitition()
 
 st.title("Customer Details")
 
-# Create 3 columns for the filters
-col1, col2, col3 = st.columns(3)
+# Streamlit app with sidebar navigation
+# st.sidebar.title(app_name)
 
-# Add filters in separate columns
-with col1:
-    # Create a text input to search by Contact Code
-    contact_code = st.text_input('Enter Contact Code:', '')
+st.sidebar.subheader("Search for client")
 
-with col2:
-    # Add a search box for First Name
-    first_name = st.text_input('Enter First Name:', '')
+# Create a text input to search by Contact Code
+contact_code = st.sidebar.text_input('Enter Contact Code:', '')
 
-with col3:
-    # Add a search box for Last Name
-    last_name = st.text_input('Enter Last Name:', '')
+# Add a search box for First Name
+first_name = st.sidebar.text_input('Enter First Name:', '')
+
+# Add a search box for Last Name
+last_name = st.sidebar.text_input('Enter Last Name:', '')
 
 
 
@@ -53,30 +50,21 @@ if first_name or last_name:
 
 
 
-# def get_contact_details(contact_code):
-#     conn = sqlite3.connect('ramona_db.db')
-#     query = f'''
-#         SELECT
-#         "Contact Code",
-#         "Contact First Name",
-#         "Contact Last Name"
-#         FROM eV_Contacts
-#         WHERE "Contact Code" = {contact_code}
-#         '''
-#     df = pd.read_sql_query(query, conn)
-#     conn.close()
-#     return df
-
-# Get pet details and display in a table
-
 # Collect Pet details
 pet_data = functions.get_pet_details(contact_code)
+print(pet_data)
+
 if not pet_data.empty:
     st.write("### Pet Details:")
     st.markdown(pet_data.to_markdown(index=False), unsafe_allow_html=True)
-    selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'], horizontal=True)
+    if len(pet_data)>1:
+        selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'], horizontal=True)
+    else:
+        selected_pet_id = pet_data['Pet ID'].values[0]
 
     selected_pet_name = pet_data.loc[pet_data['Pet ID'] == selected_pet_id, 'Name'].values[0]
+    print(selected_pet_name)
+    print(selected_pet_id)
     st.write(f"### Invoices for {selected_pet_name}")
 
     incl_subsc = st.radio("Include Subscription invoices", ("No", "Yes"))
@@ -95,6 +83,6 @@ if not pet_data.empty:
             st.markdown(all_invoices.to_markdown(index=False), unsafe_allow_html=True)
         else:
             st.write("No invoices found for the selected pet.")
-else:
-    st.write("No pets found for this customer.")
+    else:
+        st.write("No pets found for this customer.")
 

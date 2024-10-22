@@ -227,3 +227,13 @@ def get_invoices_wo_subsc(pet_id):
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
+
+# Load data
+def load_cvs_data(file_path):
+  df = pd.read_csv(file_path, index_col=0)
+
+  return df
+
+def load_xero_data(file_path):
+    return pd.read_excel(file_path, skiprows=4, header=0).drop([0, 1])
+
