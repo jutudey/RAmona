@@ -1,10 +1,6 @@
 import streamlit as st
-import sqlite3
-import pandas as pd
 import functions
-from PIL import Image
-import numpy as np
-import re
+
 
 app_name=functions.set_page_definitition()
 
@@ -26,21 +22,21 @@ df1 = functions.load_adyen_links(PaymentLinks)
 # Filter only PAYG links
 df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 
-st.subheader("Adyen PAYG Payment Links - df1")
-st.write("Payment links related to failed subscription payments have been disregarded")
-st.dataframe(df1)
-st.write(len(df1))
+# st.subheader("Adyen PAYG Payment Links - df1")
+# st.write("Payment links related to failed subscription payments have been disregarded")
+# st.dataframe(df1)
+# st.write(len(df1))
 
 #----------------------------------------------------
 # Import Xero PAYG data
 #----------------------------------------------------
 
-st.subheader("Xero Accounts Receivables report - df3")
+st.subheader("Xero Accounts Receivables report")
 df3 = functions.load_xero_AR_report(XeroARreport)
 st.dataframe(df3)
-st.write(len(df3))
+# st.write(len(df3))
 
-st.subheader("All Xero PAYG invoices - df2")
+# st.subheader("All Xero PAYG invoices - df2")
 
 df2 = functions.load_xero_PAYGrec_report(XeroPAYGrecReport)
 
@@ -50,8 +46,8 @@ df2.loc[df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Unpaid'
 # Set Status to 'Paid' for rows where Invoice Number is not found in df3
 df2.loc[~df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Paid'
 
-st.dataframe(df2)
-st.write(len(df2))
+# st.dataframe(df2)
+# st.write(len(df2))
 
 
 
@@ -64,17 +60,17 @@ st.write(len(df2))
 
 # All PAYG links that are in both
 in_both = df1.merge(df2, how='inner', left_on='id', right_on='Adyen Ref ID')
-st.subheader("merged data")
-st.dataframe(in_both)
-st.write(len(in_both))
+# st.subheader("merged data")
+# st.dataframe(in_both)
+# st.write(len(in_both))
 
-st.subheader("Easily matched (using payment link ID")
+# st.subheader("Easily matched (using payment link ID")
 
 in_both_display = in_both[["Invoice Number",
                            "status", "Status", "Link Type", "creationDate",
                            "amount", "Description", "Customer ID", "Pet ID"]]
-st.dataframe(in_both_display)
-st.write(len(in_both_display))
+# st.dataframe(in_both_display)
+# st.write(len(in_both_display))
 
 # st.subheader("Only in Adyen")
 
@@ -88,20 +84,27 @@ df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left'
 #----------------------------------------------------
 
 
-st.sidebar.subheader("Find invoice details")
+st.sidebar.subheader("Select an invoice")
 
 # Create a text input to search by invoice id
 # ar_invoice = st.sidebar.text_input('Enter Invoice ID:', '')
-ar_invoice = "INV-6149"
-st.sidebar.subheader(ar_invoice)
-# Create a text input to search by Contact Code
-contact_code = st.sidebar.text_input('Enter Contact Code:', '')
 
-# Add a search box for First Name
-first_name = st.sidebar.text_input('Enter First Name:', '')
+selected_ar_invoice = st.sidebar.selectbox('',
+                                        df3["Invoice Number"].astype(str))
+selected_contact_code = selected_ar_invoice.split(' - ')[0]
+ar_invoice = selected_ar_invoice
 
-# Add a search box for Last Name
-last_name = st.sidebar.text_input('Enter Last Name:', '')
+# ar_invoice = "INV-6149"
+# st.sidebar.subheader(ar_invoice)
+
+# # Create a text input to search by Contact Code
+# contact_code = st.sidebar.text_input('Enter Contact Code:', '')
+#
+# # Add a search box for First Name
+# first_name = st.sidebar.text_input('Enter First Name:', '')
+#
+# # Add a search box for Last Name
+# last_name = st.sidebar.text_input('Enter Last Name:', '')
 
 
 #----------------------------------------------------
