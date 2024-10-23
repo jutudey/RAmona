@@ -1,3 +1,4 @@
+import numpy as np
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -305,24 +306,47 @@ def extract_six_numbers(merchant_reference):
         return ', '.join(matches)
     return None
 
-# def extract_invoice_reference(merchant_reference):
-#     if re.search(r':.*-.*-', merchant_reference):
-#         try:
-#             colon_index = merchant_reference.index(':') + 1
-#             first_dash_index = merchant_reference.index('-', colon_index) + 1
-#             second_dash_index = merchant_reference.index('-', first_dash_index)
-#             return merchant_reference[colon_index:second_dash_index]
-#         except ValueError:
-#             return None
-#     elif ':' not in merchant_reference:
-#         return 'No invoice reference'
-#     else:
-#         return None
-
-
-def load_xero_data(file_path):
+def load_xero_PAYGrec_report(file_path):
     df = pd.read_excel(file_path, skiprows=4, header=0).drop([0, 1])
     df = df[~df['Date'].isin(["Total PetCare Advanced PAYG", "Total PAYG Income", "Total", "PetCare Advanced PAYG"])]
     df = df.dropna(how='all')
+
+    # Cleaning up the ref ID
+    # Define a helper function
+    def process_reference(value):
+        if isinstance(value, str) and value.startswith('PL:'):
+            return value[3:]
+        else:
+            return np.nan
+
+    # Apply the helper function to the "Reference" column to create the new column
+    df['Adyen Ref ID'] = df['Reference'].apply(process_reference)
+
+    # add VAT to the amount
+    df['Amount (incl VAT)'] = (df['Credit (Source)'] * 1.20).round(2)
+
+    # add payment status from AR report
+
+
+    return df
+
+def load_xero_AR_report(file_path):
+    df = pd.read_excel(file_path, skiprows=7, header=0).drop([0, 1])
+    df = df[~df['Contact Account Number'].isin(["Total PAYG Client", "Percentage of total", "Total", "PetCare Advanced PAYG"])]
+    df = df.dropna(how='all')
+
+    # # Cleaning up the ref ID
+    # # Define a helper function
+    # def process_reference(value):
+    #     if isinstance(value, str) and value.startswith('PL:'):
+    #         return value[3:]
+    #     else:
+    #         return np.nan
+    #
+    # # Apply the helper function to the "Reference" column to create the new column
+    # df['Adyen Ref ID'] = df['Reference'].apply(process_reference)
+    #
+    # # add VAT to the amount
+    # df['Amount (incl VAT)'] = (df['Credit (Source)'] * 1.20).round(2)
 
     return df

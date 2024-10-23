@@ -24,29 +24,31 @@ st.dataframe(df1)
 st.write(len(df1))
 
 #----------------------------------------------------
-# Import Xero PAYG invoices
+# Import Xero PAYG data
 #----------------------------------------------------
 
-XeroInvoices = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
-df2 = functions.load_xero_data(XeroInvoices)
+st.subheader("Xero Accounts Receivables report")
+XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_Aged_Receivables_Detail.xlsx"
+df3 = functions.load_xero_AR_report(XeroARreport)
+st.dataframe(df3)
+st.write(len(df3))
 
-# Cleaning up the ref ID
-# Define a helper function
-def process_reference(value):
-    if isinstance(value, str) and value.startswith('PL:'):
-        return value[3:]
-    else:
-        return np.nan
+st.subheader("All Xero PAYG invoices")
 
-# Apply the helper function to the "Reference" column to create the new column
-df2['Adyen Ref ID'] = df2['Reference'].apply(process_reference)
+XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
+df2 = functions.load_xero_PAYGrec_report(XeroPAYGrecReport)
 
-# add VAT to the amount
-df2['Amount (incl VAT)'] = (df2['Credit (Source)'] * 1.20).round(2)
+# Update Status in df2 where Invoice Number exists in df3
+df2.loc[df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Unpaid'
 
-st.subheader("Xero PAYG invoices")
+
 st.dataframe(df2)
 st.write(len(df2))
+
+
+
+
+
 
 #----------------------------------------------------
 # Merging tables
@@ -54,14 +56,15 @@ st.write(len(df2))
 
 # All PAYG links that are in both
 in_both = df1.merge(df2, how='inner', left_on='id', right_on='Adyen Ref ID')
+st.subheader("merged data")
 st.dataframe(in_both)
 st.write(len(in_both))
 
-st.subheader("Easily matched")
+st.subheader("Easily matched (using payment link ID")
 
 in_both_display = in_both[["Invoice Number",
-                           "status", "Link Type", "creationDate",
-                           "amount", "Description"]]
+                           "status", "Status", "Link Type", "creationDate",
+                           "amount", "Description", "Customer ID", "Pet ID"]]
 st.dataframe(in_both_display)
 st.write(len(in_both_display))
 
@@ -70,3 +73,9 @@ st.subheader("Only in Adyen")
 df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])
 st.dataframe(df_not_in_df2)
 st.write(len(df_not_in_df2))
+
+
+#----------------------------------------------------
+# investigate individual invoice
+#----------------------------------------------------
+
