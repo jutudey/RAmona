@@ -55,20 +55,19 @@ def get_pet_details(contact_code):
     conn = sqlite3.connect('ramona_db.db')
     query = f'''
       SELECT 
-        "Animal_Code" as "Pet ID", 
-        "Animal_Name" as "Name", 
+        "Animal Code" as "Pet ID", 
+        "Animal Name" as "Name", 
         "Species", 
         "Breed", 
-        "Animal_Record_Created_At" as "First registered at"
+        "Animal Record Created At" as "First registered at"
         FROM eV_animals
-        WHERE "Owner_Contact_Code" = '{contact_code}'
+        WHERE "Owner Contact Code" = '{contact_code}'
       '''
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
 
     # Function to get contact details by First Name and Last Name
-
 
 # Case Details Functions
 
@@ -233,6 +232,11 @@ def get_invoices_wo_subsc(pet_id):
 #----------------------------------------------------
 # Load data (ETL)
 #----------------------------------------------------
+
+def get_pet_data(file_path):
+    df = pd.read_csv(file_path, index_col=0)
+    return df
+
 
 def load_adyen_links(file_path):
   df = pd.read_csv(file_path, index_col=0)

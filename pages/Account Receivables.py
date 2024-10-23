@@ -9,10 +9,18 @@ import re
 app_name=functions.set_page_definitition()
 
 #----------------------------------------------------
+# filepaths
+#----------------------------------------------------
+PaymentLinks = "data/paymentLinks-2024-10-22.csv"
+XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_Aged_Receivables_Detail.xlsx"
+XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
+eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
+
+
+#----------------------------------------------------
 # Import Adyen links
 #----------------------------------------------------
 
-PaymentLinks = "data/paymentLinks-2024-10-22.csv"
 df1 = functions.load_adyen_links(PaymentLinks)
 
 # Filter only PAYG links
@@ -28,14 +36,12 @@ st.write(len(df1))
 #----------------------------------------------------
 
 st.subheader("Xero Accounts Receivables report - df3")
-XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_Aged_Receivables_Detail.xlsx"
 df3 = functions.load_xero_AR_report(XeroARreport)
 st.dataframe(df3)
 st.write(len(df3))
 
 st.subheader("All Xero PAYG invoices - df2")
 
-XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
 df2 = functions.load_xero_PAYGrec_report(XeroPAYGrecReport)
 
 # Update Status in df2 where Invoice Number exists in df3
@@ -95,10 +101,48 @@ first_name = st.sidebar.text_input('Enter First Name:', '')
 # Add a search box for Last Name
 last_name = st.sidebar.text_input('Enter Last Name:', '')
 
-# Collect Payment Link status
+# collect customer and pet ID
 if ar_invoice:
     ar_customer_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Customer ID'].iloc[0]
     st.write("Customer ID: " + ar_customer_id)
     ar_pet_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Pet ID'].iloc[0]
     st.write("Pet ID: " + ar_pet_id)
+
+    # collect customer details
+    contact_data = functions.get_contact_details(ar_customer_id)
+    st.dataframe(contact_data)
+    # st.write("### Customer Details:")
+    # st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
+    # st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
+    # st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
+
+    pet_data = functions.get_pet_data(eV_animals)
+    # st.write(pet_data)
+
+    # Ensure both 'Animal Code' column and 'ar_pet_id' are of the same type
+    pet_data['Animal Code'] = pet_data['Animal Code'].astype(str)
+    ar_pet_id = str(ar_pet_id)
+
+    # Now perform the lookup
+    pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
+
+    print(pet_name)
+
+    # pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
+    st.write(pet_name)
+
+    ar_invoices = functions.get_invoices(ar_pet_id)
+    st.dataframe(ar_invoices)
+    st.markdown(ar_invoices.to_markdown(index=False), unsafe_allow_html=True)
+
+    if len(ar_invoices)>1:
+        selected_invoice_id = st.radio("Select Invoice ID:", ar_invoices['Invoice #'], horizontal=True)
+    else:
+        selected_invoice_id = ar_invoices['Invoice #'].values[0]
+
+    st.write(f"### Details for Invoice no.: {selected_invoice_id}")
+
+
+    ar_invoice_lines = functions.get_invoiceDetails(selected_invoice_id)
+    st.dataframe(ar_invoice_lines)
 

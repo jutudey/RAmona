@@ -14,7 +14,7 @@ st.title("Customer Details")
 st.sidebar.subheader("Search for client")
 
 # Create a text input to search by Contact Code
-contact_code = st.sidebar.text_input('Enter Contact Code:', '')
+contact_code = st.sidebar.text_input('Enter Customer ID:', '')
 
 # Add a search box for First Name
 first_name = st.sidebar.text_input('Enter First Name:', '')
@@ -43,7 +43,7 @@ if first_name or last_name:
                 st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
                 st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
             else:
-                st.write("No details found for this Contact Code.")
+                st.info("No details found for this Customer ID")
 
     else:
         st.write("No contacts found with the given name(s).")
