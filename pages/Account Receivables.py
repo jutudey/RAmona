@@ -82,7 +82,7 @@ df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left'
 
 
 #----------------------------------------------------
-# investigate individual invoice
+# Search for invoice details
 #----------------------------------------------------
 
 
@@ -90,8 +90,8 @@ st.sidebar.subheader("Find invoice details")
 
 # Create a text input to search by invoice id
 # ar_invoice = st.sidebar.text_input('Enter Invoice ID:', '')
-ar_invoice = "INV-8830"
-st.sidebar.subheader("INV-8830")
+ar_invoice = "INV-7648"
+st.sidebar.subheader(ar_invoice)
 # Create a text input to search by Contact Code
 contact_code = st.sidebar.text_input('Enter Contact Code:', '')
 
@@ -101,10 +101,31 @@ first_name = st.sidebar.text_input('Enter First Name:', '')
 # Add a search box for Last Name
 last_name = st.sidebar.text_input('Enter Last Name:', '')
 
-# collect customer and pet ID
+
+#----------------------------------------------------
+# Present all info for individual invoice
+#----------------------------------------------------
+
 if ar_invoice:
+    # Payment link data
+    ar_xero_status = df2.loc[df2['Invoice Number'] == ar_invoice, 'Status'].iloc[0]
+    st.write("Xero status: " + ar_xero_status)
+
+    ar_amount = df1.loc[df1['Invoice ID'] == ar_invoice, 'amount'].iloc[0]
+    st.write("Outstanding amount: " + ar_amount)
+
+    ar_link_date = df1.loc[df1['Invoice ID'] == ar_invoice, 'creationDate'].iloc[0]
+    st.write("Link creation date: " + ar_link_date)
+
     ar_customer_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Customer ID'].iloc[0]
     st.write("Customer ID: " + ar_customer_id)
+
+    ar_paymentLink = df1.loc[df1['Invoice ID'] == ar_invoice, 'paymentLink'].iloc[0]
+    st.write("Payment Link: " + ar_paymentLink)
+
+    ar_link_status = df1.loc[df1['Invoice ID'] == ar_invoice, 'status'].iloc[0]
+    st.write("Adyen status: " + ar_link_status)
+
     ar_pet_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Pet ID'].iloc[0]
     st.write("Pet ID: " + ar_pet_id)
 
@@ -117,7 +138,6 @@ if ar_invoice:
     # st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
 
     pet_data = functions.get_pet_data(eV_animals)
-    # st.write(pet_data)
 
     # Ensure both 'Animal Code' column and 'ar_pet_id' are of the same type
     pet_data['Animal Code'] = pet_data['Animal Code'].astype(str)
@@ -125,8 +145,6 @@ if ar_invoice:
 
     # Now perform the lookup
     pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
-
-    print(pet_name)
 
     # pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
     st.write(pet_name)
