@@ -142,7 +142,7 @@ if case_invoice_no:
 
         # Collect Payment Links details
         data2 = functions.get_PaymentLinkDetails(customer_id, pet_id)
-
+        print(data2)
         # Set height dynamically based on the number of rows
         num_rows = len(data)
         height = min(40 * num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows

@@ -238,11 +238,18 @@ def load_adyen_links(file_path):
 
   # identifies VERA Toolbox links as PAYG
   def set_link_type(row):
+      if row['amount'] == "GBP 0.01":
+          return 'Card detail change'
+      if row['amount'] == "GBP 1.00":
+          return 'Test entry'
+      if row['amount'] == "GBP 0.10":
+          return 'Ignored'
       if pd.notna(row['createdBy']):
           return 'PAYG - Vera Adyen'
       if (isinstance(row['merchantReference'], str)
               and re.search(r"[ _-]", row['merchantReference'])):
           return 'PAYG - Vera Toolbox'
+
       return None
 
   # Apply the function to create the "Link Type" column
@@ -251,7 +258,67 @@ def load_adyen_links(file_path):
   # Tag Failed Subscriptions payments
   df['Link Type'] = df['Link Type'].fillna('Failed Subscription')
 
+  # Add customer ID and pet ID by extracting all strings of 6 numbers from 'merchantReference'
+  def extract_six_numbers(merchant_reference):
+      matches = re.findall(r'\d{6}', merchant_reference)
+      customer_ids = []
+      pet_ids = []
+      for match in matches:
+          if match.startswith('20'):
+              customer_ids.append(match)
+          elif match.startswith('10'):
+              pet_ids.append(match)
+      return customer_ids, pet_ids
+
+  df[['Customer ID', 'Pet ID']] = df['merchantReference'].apply(
+      lambda x: pd.Series(extract_six_numbers(x))
+  )
+
+  # Convert lists to comma-separated strings
+  df['Customer ID'] = df['Customer ID'].apply(lambda x: ', '.join(x) if isinstance(x, list) else None)
+  df['Pet ID'] = df['Pet ID'].apply(lambda x: ', '.join(x) if isinstance(x, list) else None)
+
+  # Add invoice number (placeholder for future implementation)
+  def extract_invoice_reference(merchant_reference):
+      if re.search(r':.*-.*-', merchant_reference):
+          try:
+              colon_index = merchant_reference.index(':') + 1
+              first_dash_index = merchant_reference.index('-', colon_index) + 1
+              second_dash_index = merchant_reference.index('-', first_dash_index)
+              return merchant_reference[colon_index:second_dash_index]
+          except ValueError:
+              return None
+      elif ':' not in merchant_reference:
+          return 'No invoice reference'
+      else:
+          return None
+
+  df[['Invoice ID']] = df['merchantReference'].apply(
+      lambda x: pd.Series(extract_invoice_reference(x))
+  )
+
   return df
+
+def extract_six_numbers(merchant_reference):
+    matches = re.findall(r'\d{6}', merchant_reference)
+    if matches:
+        return ', '.join(matches)
+    return None
+
+# def extract_invoice_reference(merchant_reference):
+#     if re.search(r':.*-.*-', merchant_reference):
+#         try:
+#             colon_index = merchant_reference.index(':') + 1
+#             first_dash_index = merchant_reference.index('-', colon_index) + 1
+#             second_dash_index = merchant_reference.index('-', first_dash_index)
+#             return merchant_reference[colon_index:second_dash_index]
+#         except ValueError:
+#             return None
+#     elif ':' not in merchant_reference:
+#         return 'No invoice reference'
+#     else:
+#         return None
+
 
 def load_xero_data(file_path):
     df = pd.read_excel(file_path, skiprows=4, header=0).drop([0, 1])
