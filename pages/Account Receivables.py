@@ -111,19 +111,19 @@ last_name = st.sidebar.text_input('Enter Last Name:', '')
 if ar_invoice:
     # Payment link data
     ar_xero_status = df2.loc[df2['Invoice Number'] == ar_invoice, 'Status'].iloc[0]
-    st.write("Xero status: " + ar_xero_status)
+    # st.write("Xero status: " + ar_xero_status)
 
     ar_amount = df1.loc[df1['Invoice ID'] == ar_invoice, 'amount'].iloc[0]
-    st.write("Outstanding amount: " + ar_amount)
+    # st.write("Outstanding amount: " + ar_amount)
 
     ar_link_date = df1.loc[df1['Invoice ID'] == ar_invoice, 'creationDate'].iloc[0]
-    st.write("Link creation date: " + ar_link_date)
+    # st.write("Link creation date: " + ar_link_date)
 
     ar_customer_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Customer ID'].iloc[0]
-    st.write("Customer ID: " + ar_customer_id)
+    # st.write("Customer ID: " + ar_customer_id)
 
     ar_paymentLink = df1.loc[df1['Invoice ID'] == ar_invoice, 'paymentLink'].iloc[0]
-    st.write("Payment Link: " + ar_paymentLink)
+    # st.write("Payment Link: " + ar_paymentLink)
 
     ar_link_status = df1.loc[df1['Invoice ID'] == ar_invoice, 'status'].iloc[0]
     if ar_link_status == "completed":
@@ -131,18 +131,10 @@ if ar_invoice:
     else:
         ar_link_status = f"Unpaid ({ar_link_status})"
 
-    st.write("Adyen status: " + ar_link_status)
+    # st.write("Adyen status: " + ar_link_status)
 
     ar_pet_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Pet ID'].iloc[0]
-    st.write("Pet ID: " + ar_pet_id)
-
-    # collect customer details
-    # contact_data = functions.get_contact_details(ar_customer_id)
-    # st.dataframe(contact_data)
-    # st.write("### Customer Details:")
-    # st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
-    # st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
-    # st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
+    # st.write("Pet ID: " + ar_pet_id)
 
     pet_data = functions.get_pet_data(eV_animals)
 
@@ -154,17 +146,17 @@ if ar_invoice:
     pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
 
     # pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
-    st.write(pet_name)
+    # st.write(pet_name)
 
 
     ar_invoices = functions.get_invoices(ar_pet_id)
-    st.dataframe(ar_invoices)
+    # st.dataframe(ar_invoices)
 
     ar_first_name = ar_invoices.loc[ar_invoices['Animal Code'] == ar_pet_id, 'First Name'].iloc[0]
     ar_last_name = ar_invoices.loc[ar_invoices['Animal Code'] == ar_pet_id, 'Last Name'].iloc[0]
 
-    st.write(ar_first_name)
-    st.write(ar_last_name)
+    # st.write(ar_first_name)
+    # st.write(ar_last_name)
 
 
     st.header(f"{ar_invoice}: {ar_first_name} {ar_last_name} - {pet_name}")
@@ -196,19 +188,78 @@ if ar_invoice:
     with col2:
         st.markdown("##### Adyen Link: " + ar_paymentLink)
 
-    st.markdown("##### All ezyVet invoices for " + pet_name)
-    st.markdown(ar_invoices.to_markdown(index=False), unsafe_allow_html=True)
+    st.markdown("---")
 
-    if len(ar_invoices)>1:
-        selected_invoice_id = st.radio("Select Invoice ID:", ar_invoices['Invoice #'], horizontal=True)
-    else:
-        selected_invoice_id = ar_invoices['Invoice #'].values[0]
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("##### All ezyVet invoices for " + pet_name)
+        ar_invoices = ar_invoices.rename(columns={
+            'Invoice #': 'Invoice ID',
+            'Invoice Date': 'Invoice Date',
+            'Client Contact Code': 'Customer ID',
+            'First Name': 'First',
+            'Last Name': 'Last',
+            'Animal Code': 'Animal ID',
+            'Animal Name': 'Animal',
+            'Total Standard Price(incl)': 'Standard Price',
+            'Total Discount Percentage': 'Discount (%)',
+            'Total Discount Value': 'Discount Value',
+            'Total Invoiced (incl)': 'Total Amount'
+            })
+
+
+        # Define a function to convert the Invoice ID to a hyperlink
+        def create_hyperlink(invoice_id):
+            # Use only the last 5 characters of the Invoice ID in the link
+            record_id = invoice_id[-5:]
+            # Generate the hyperlink
+            return f"[{invoice_id}](https://gvak.euw1.ezyvet.com/?recordclass=Invoice&recordid={record_id})"
+
+
+        # Create a new column with hyperlinks for the Invoice ID
+        ar_invoices['Invoice Link'] = ar_invoices['Invoice ID'].apply(create_hyperlink)
+
+        # Select specific columns for the output, including both original and hyperlink versions of the Invoice ID
+        selected_columns = [
+            # 'Invoice ID',  # Original Invoice ID with all 6 characters
+            'Invoice Link',  # New hyperlink version of Invoice ID
+            'Invoice Date',
+            'Total Amount'
+        ]
+
+        # Create a new DataFrame with only the selected columns
+        ar_invoices_subset = ar_invoices[selected_columns]
+        st.markdown(ar_invoices_subset.to_markdown(index=False), unsafe_allow_html=True)
+
+
+    with col2:
+        if len(ar_invoices)>1:
+            st.markdown("##### Select Invoice ID ")
+            selected_invoice_id = st.radio("", ar_invoices['Invoice ID'], horizontal=False)
+        else:
+            selected_invoice_id = ar_invoices['Invoice #'].values[0]
+
+    st.markdown("---")
 
     st.write(f"### Details for Invoice no.: {selected_invoice_id}")
 
 
     ar_invoice_lines = functions.get_invoiceDetails(selected_invoice_id)
-    st.dataframe(ar_invoice_lines)
+
+    ar_invoice_lines.rename(columns={
+        'Invoice Line ID': 'Line ID',
+        'Product Name': 'Product',
+        'Standard Price(incl)': 'Price',
+        'DiscountPercentage': 'Discount [%]',
+        'DiscountValue': 'Discount [£]',
+        'Total Invoiced (incl)': 'Total Amount',
+        'Discount Name': 'Discount description'
+    }, inplace=True)
+
+
+    st.markdown(ar_invoice_lines.to_markdown(index=False), unsafe_allow_html=True)
+
+
 
 
 
