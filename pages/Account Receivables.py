@@ -47,6 +47,8 @@ df2 = functions.load_xero_PAYGrec_report(XeroPAYGrecReport)
 # Update Status in df2 where Invoice Number exists in df3
 df2.loc[df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Unpaid'
 
+# Set Status to 'Paid' for rows where Invoice Number is not found in df3
+df2.loc[~df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Paid'
 
 st.dataframe(df2)
 st.write(len(df2))
@@ -90,7 +92,7 @@ st.sidebar.subheader("Find invoice details")
 
 # Create a text input to search by invoice id
 # ar_invoice = st.sidebar.text_input('Enter Invoice ID:', '')
-ar_invoice = "INV-7648"
+ar_invoice = "INV-6149"
 st.sidebar.subheader(ar_invoice)
 # Create a text input to search by Contact Code
 contact_code = st.sidebar.text_input('Enter Contact Code:', '')
@@ -124,14 +126,19 @@ if ar_invoice:
     st.write("Payment Link: " + ar_paymentLink)
 
     ar_link_status = df1.loc[df1['Invoice ID'] == ar_invoice, 'status'].iloc[0]
+    if ar_link_status == "completed":
+        ar_link_status = "Paid"
+    else:
+        ar_link_status = f"Unpaid ({ar_link_status})"
+
     st.write("Adyen status: " + ar_link_status)
 
     ar_pet_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Pet ID'].iloc[0]
     st.write("Pet ID: " + ar_pet_id)
 
     # collect customer details
-    contact_data = functions.get_contact_details(ar_customer_id)
-    st.dataframe(contact_data)
+    # contact_data = functions.get_contact_details(ar_customer_id)
+    # st.dataframe(contact_data)
     # st.write("### Customer Details:")
     # st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
     # st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
@@ -143,14 +150,53 @@ if ar_invoice:
     pet_data['Animal Code'] = pet_data['Animal Code'].astype(str)
     ar_pet_id = str(ar_pet_id)
 
-    # Now perform the lookup
+    # Now perform the lookups
     pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
 
     # pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
     st.write(pet_name)
 
+
     ar_invoices = functions.get_invoices(ar_pet_id)
     st.dataframe(ar_invoices)
+
+    ar_first_name = ar_invoices.loc[ar_invoices['Animal Code'] == ar_pet_id, 'First Name'].iloc[0]
+    ar_last_name = ar_invoices.loc[ar_invoices['Animal Code'] == ar_pet_id, 'Last Name'].iloc[0]
+
+    st.write(ar_first_name)
+    st.write(ar_last_name)
+
+
+    st.header(f"{ar_invoice}: {ar_first_name} {ar_last_name} - {pet_name}")
+
+    col1, col2, col3 = st.columns(3)
+
+    # Add filters in separate columns
+    with col1:
+        st.markdown("##### Outstanding amount: " + ar_amount)
+
+
+    with col3:
+
+        if ar_xero_status == "Unpaid" and ar_link_status == "Paid":
+            ar_xero_status_formatted = f"<span style='color:red; font-weight:bold;'>{ar_xero_status}</span>"
+            st.markdown("##### Xero status:    " + ar_xero_status_formatted, unsafe_allow_html=True)
+            st.markdown("##### Adyen status: " + ar_link_status)
+            notification = "Xero is not correctly updated"
+            st.info(notification)
+            st.button("Do something about it")
+        else:
+            ar_xero_status_formatted = ar_xero_status
+            st.markdown("##### Xero status: " + ar_xero_status_formatted, unsafe_allow_html=True)
+            st.markdown("##### Adyen status: " + ar_link_status)
+
+
+
+
+    with col2:
+        st.markdown("##### Adyen Link: " + ar_paymentLink)
+
+    st.markdown("##### All ezyVet invoices for " + pet_name)
     st.markdown(ar_invoices.to_markdown(index=False), unsafe_allow_html=True)
 
     if len(ar_invoices)>1:
@@ -163,4 +209,7 @@ if ar_invoice:
 
     ar_invoice_lines = functions.get_invoiceDetails(selected_invoice_id)
     st.dataframe(ar_invoice_lines)
+
+
+
 
