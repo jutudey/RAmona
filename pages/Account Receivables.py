@@ -1,7 +1,6 @@
 import streamlit as st
 import functions
 
-
 app_name=functions.set_page_definitition()
 
 #----------------------------------------------------
@@ -24,7 +23,7 @@ df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 
 # st.subheader("Adyen PAYG Payment Links - df1")
 # st.write("Payment links related to failed subscription payments have been disregarded")
-# st.dataframe(df1)
+st.dataframe(df1)
 # st.write(len(df1))
 
 #----------------------------------------------------
@@ -92,7 +91,7 @@ st.sidebar.subheader("Select an invoice")
 selected_ar_invoice = st.sidebar.selectbox('',
                                         df3["Invoice Number"].astype(str))
 selected_contact_code = selected_ar_invoice.split(' - ')[0]
-ar_invoice = selected_ar_invoice
+ar_invoice_id = selected_ar_invoice
 
 # ar_invoice = "INV-6149"
 # st.sidebar.subheader(ar_invoice)
@@ -111,24 +110,50 @@ ar_invoice = selected_ar_invoice
 # Present all info for individual invoice
 #----------------------------------------------------
 
-if ar_invoice:
+if ar_invoice_id:
+
+    try:
+        # Attempt to retrieve Customer ID from df1
+        ar_customer_id = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'Customer ID'].iloc[0]
+    except IndexError:
+        # If no match is found, set Customer ID to an empty string
+        ar_customer_id = ""
+
+    # Check if Customer ID is empty
+    if not ar_customer_id:
+        ar_merchant_reference = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'merchantReference'].iloc[0]
+
+        # Prompt user to enter the Customer ID manually
+        st.sidebar.write(f"The description in the Adyen Payment Link is not enough to identify Customer ID or Pet ID: "
+                                                   f"\n"
+                                                   f"{ar_merchant_reference}")
+        ar_customer_id_new = st.sidebar.text_input("Please enter an ezyVet Customer ID")
+
+        # Check if the user provided a new Customer ID
+        if ar_customer_id_new:
+            # Run the rest of your code here using the provided Customer ID
+            # st.sidebar.write(f"Proceding with Customer ID: {ar_customer_id_new}")
+            ar_customer_id = ar_customer_id_new
+        else:
+            st.warning("Please enter a valid Customer ID to proceed.")
+    else:
+        # Run the rest of your code with the retrieved Customer ID
+        st.write(f"Running the rest of the code with Customer ID: {ar_customer_id}")
+
     # Payment link data
-    ar_xero_status = df2.loc[df2['Invoice Number'] == ar_invoice, 'Status'].iloc[0]
+    ar_xero_status = df2.loc[df2['Invoice Number'] == ar_invoice_id, 'Status'].iloc[0]
     # st.write("Xero status: " + ar_xero_status)
 
-    ar_amount = df1.loc[df1['Invoice ID'] == ar_invoice, 'amount'].iloc[0]
+    ar_amount = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'amount'].iloc[0]
     # st.write("Outstanding amount: " + ar_amount)
 
-    ar_link_date = df1.loc[df1['Invoice ID'] == ar_invoice, 'creationDate'].iloc[0]
+    ar_link_date = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'creationDate'].iloc[0]
     # st.write("Link creation date: " + ar_link_date)
 
-    ar_customer_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Customer ID'].iloc[0]
-    # st.write("Customer ID: " + ar_customer_id)
-
-    ar_paymentLink = df1.loc[df1['Invoice ID'] == ar_invoice, 'paymentLink'].iloc[0]
+    ar_paymentLink = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'paymentLink'].iloc[0]
     # st.write("Payment Link: " + ar_paymentLink)
 
-    ar_link_status = df1.loc[df1['Invoice ID'] == ar_invoice, 'status'].iloc[0]
+    ar_link_status = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'status'].iloc[0]
     if ar_link_status == "completed":
         ar_link_status = "Paid"
     else:
@@ -136,8 +161,44 @@ if ar_invoice:
 
     # st.write("Adyen status: " + ar_link_status)
 
-    ar_pet_id = df1.loc[df1['Invoice ID'] == ar_invoice, 'Pet ID'].iloc[0]
-    # st.write("Pet ID: " + ar_pet_id)
+
+
+
+    ar_pet_id = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'Pet ID'].iloc[0]
+
+
+    try:
+        # Attempt to retrieve Customer ID from df1
+        ar_pet_id = df1.loc[df1['Invoice ID'] == ar_invoice_id, 'Pet ID'].iloc[0]
+    except IndexError:
+        # If no match is found, set Pet ID to an empty string
+        ar_pet_id = ""
+
+    # Check if Customer ID is empty
+    if not ar_pet_id:
+
+        # Prompt user to enter the Customer ID manually
+        # st.sidebar.write(f"You also have to enter the Pet ID")
+
+        ar_pet_id_newish = st.sidebar.text_input("Please enter an ezyVet Pet Id", key='customer_id_input')
+
+        # Check if the user provided a new Customer ID
+        if ar_pet_id_newish:
+            # Run the rest of your code here using the provided Pet ID
+            st.sidebar.write(f"Proceeding with Pet ID: {ar_pet_id_newish}")
+            ar_pet_id = ar_pet_id_newish
+        else:
+            st.warning("Please enter a valid Pet ID to proceed.")
+    else:
+        # Run the rest of your code with the retrieved Customer ID
+        st.write(f"Proceeding with Pet ID: {ar_pet_id}")
+
+    st.write("Pet ID: " + ar_pet_id)
+
+
+
+
+    st.write("Pet ID: " + ar_pet_id)
 
     pet_data = functions.get_pet_data(eV_animals)
 
@@ -146,10 +207,14 @@ if ar_invoice:
     ar_pet_id = str(ar_pet_id)
 
     # Now perform the lookups
-    pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
+    result = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name']
+    if not result.empty:
+        ar_pet_name = result.iloc[0]
+    else:
+        ar_pet_name = None
+        st.info(f"Pet with Pet ID {ar_pet_id} not found in ezyVet data")# or assign a default value, e.g., 'Unknown'
 
-    # pet_name = pet_data.loc[pet_data['Animal Code'] == ar_pet_id, 'Animal Name'].iloc[0]
-    # st.write(pet_name)
+    # st.write(ar_pet_name)
 
 
     ar_invoices = functions.get_invoices(ar_pet_id)
@@ -162,7 +227,7 @@ if ar_invoice:
     # st.write(ar_last_name)
 
 
-    st.header(f"{ar_invoice}: {ar_first_name} {ar_last_name} - {pet_name}")
+    st.header(f"{ar_invoice_id}: {ar_first_name} {ar_last_name} - {ar_pet_name}")
 
     col1, col2, col3 = st.columns(3)
 
@@ -195,7 +260,7 @@ if ar_invoice:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("##### All ezyVet invoices for " + pet_name)
+        st.markdown("##### All ezyVet invoices for " + ar_pet_name)
         ar_invoices = ar_invoices.rename(columns={
             'Invoice #': 'Invoice ID',
             'Invoice Date': 'Invoice Date',
@@ -240,7 +305,7 @@ if ar_invoice:
             st.markdown("##### Select Invoice ID ")
             selected_invoice_id = st.radio("", ar_invoices['Invoice ID'], horizontal=False)
         else:
-            selected_invoice_id = ar_invoices['Invoice #'].values[0]
+            selected_invoice_id = ar_invoices['Invoice ID'].values[0]
 
     st.markdown("---")
 
