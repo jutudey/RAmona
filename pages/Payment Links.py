@@ -13,25 +13,13 @@ app_name=functions.set_page_definitition()
 #----------------------------------------------------
 
 PaymentLinks = "data/paymentLinks-2024-10-22.csv"
-df1 = functions.load_cvs_data(PaymentLinks)
+df1 = functions.load_adyen_links(PaymentLinks)
 
-# identifes VERA Toolbox links as PAYG
-def set_link_type(row):
-    if pd.notna(row['createdBy']):
-        return 'PAYG - Vera Adyen'
-    if isinstance(row['merchantReference'], str) and re.search(r"[ _-]", row['merchantReference']):
-        return 'PAYG - Vera Toolbox'
-    return None
-
-# Apply the function to create the "Link Type" column
-df1['Link Type'] = df1.apply(set_link_type, axis=1)
-
-df1['Link Type'] = df1['Link Type'].fillna('Failed Subscription')
-
-# Only PAYG links
+# Filter only PAYG links
 df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 
-st.subheader("Adyen Payment Links")
+st.subheader("Adyen PAYG Payment Links")
+st.write("Payment links related to failed subscription payments have been disregarded")
 st.dataframe(df1)
 st.write(len(df1))
 
@@ -71,7 +59,9 @@ st.write(len(in_both))
 
 st.subheader("Easily matched")
 
-in_both_display = in_both[["Invoice Number", "status", "creationDate", "amount", "Description"]]
+in_both_display = in_both[["Invoice Number",
+                           "status", "Link Type", "creationDate",
+                           "amount", "Description"]]
 st.dataframe(in_both_display)
 st.write(len(in_both_display))
 

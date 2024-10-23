@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from PIL import Image
+import re
 
 def set_page_definitition():
     app_name = "RAmona v0.1"
@@ -228,9 +229,27 @@ def get_invoices_wo_subsc(pet_id):
     conn.close()
     return df
 
-# Load data
-def load_cvs_data(file_path):
+#----------------------------------------------------
+# Load data (ETL)
+#----------------------------------------------------
+
+def load_adyen_links(file_path):
   df = pd.read_csv(file_path, index_col=0)
+
+  # identifies VERA Toolbox links as PAYG
+  def set_link_type(row):
+      if pd.notna(row['createdBy']):
+          return 'PAYG - Vera Adyen'
+      if (isinstance(row['merchantReference'], str)
+              and re.search(r"[ _-]", row['merchantReference'])):
+          return 'PAYG - Vera Toolbox'
+      return None
+
+  # Apply the function to create the "Link Type" column
+  df['Link Type'] = df.apply(set_link_type, axis=1)
+
+  # Tag Failed Subscriptions payments
+  df['Link Type'] = df['Link Type'].fillna('Failed Subscription')
 
   return df
 
