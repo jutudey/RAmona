@@ -189,8 +189,6 @@ def get_invoices(pet_id):
 	AND i."Animal Code" like {pet_id}
 	GROUP BY 
 	    i."Invoice #";
-
-
     '''
     df = pd.read_sql_query(query, conn)
     conn.close()
@@ -338,7 +336,7 @@ def load_xero_PAYGrec_report(file_path):
 
 def load_xero_AR_report(file_path):
     df = pd.read_excel(file_path, skiprows=7, header=0).drop([0, 1])
-    df.set_index("Invoice Number", inplace=True)
+    # df.set_index("Invoice Number", inplace=True)
     df = df[~df['Contact Account Number'].isin(
         ["Total PAYG Client", "Percentage of total", "Total", "PetCare Advanced PAYG"])]
     df = df.dropna(how='any', subset="Invoice Date")
@@ -357,8 +355,8 @@ def load_xero_AR_report(file_path):
     df["Total"] = df["Total"].round(2)
 
     # Force all columns to display 2 decimals
-    df[["< 1 Month", "1 Month", "2 Months", "3 Months", "Older", "Total"]] = df[
-        ["< 1 Month", "1 Month", "2 Months", "3 Months", "Older", "Total"]].applymap(lambda x: f'{x:,.2f}')
+    # df[["< 1 Month", "1 Month", "2 Months", "3 Months", "Older", "Total"]] = df[
+    #     ["< 1 Month", "1 Month", "2 Months", "3 Months", "Older", "Total"]].apply(lambda x: f'{x:,.2f}')
 
     # Cleaning up the ref ID
     # Define a helper function
@@ -370,6 +368,6 @@ def load_xero_AR_report(file_path):
 
     # Apply the helper function to the "Reference" column to create the new column
     df['Invoice Reference'] = df['Invoice Reference'].apply(process_reference)
-
+    df = df[df['Total'] != 0.01]
 
     return df
