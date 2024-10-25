@@ -9,8 +9,9 @@ app_name=functions.set_page_definitition()
 PaymentLinks = "data/paymentLinks-2024-10-22.csv"
 XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_Aged_Receivables_Detail.xlsx"
 XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
-eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
+# eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
 
+st.header(eV_animals)
 
 #----------------------------------------------------
 # Import Adyen links - df1
@@ -96,11 +97,11 @@ df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left'
 #----------------------------------------------------
 # Present AR report to user and select invoice to investigate
 #----------------------------------------------------
-
+st.dataframe(df3)
 st.subheader("Xero not up to date")
 st.write("This table contains invoices where Xero thinks it is not yet paid, but the Adyen link is **Completed**")
 
-not_active = (df3['Adyen Status'] != "completed")
+not_active = (df3['Adyen Status'] == "completed")
 
 df3 = df3[not_active]
 

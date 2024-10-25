@@ -9,9 +9,9 @@ app_name=functions.set_page_definitition()
 PaymentLinks = "data/paymentLinks-2024-10-22.csv"
 XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_Aged_Receivables_Detail.xlsx"
 XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
-eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
+st.session_state.eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
 
-
+st.header(eV_animals)
 #----------------------------------------------------
 # Import Adyen links - df1
 #----------------------------------------------------
@@ -97,13 +97,18 @@ df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left'
 # Present AR report to user and select invoice to investigate
 #----------------------------------------------------
 
-st.subheader("Xero Aged Receivables")
+st.header("Xero Aged Receivables")
+st.info("This table shows all unsettled debt in Xero where the Adyen link is either still active or has expired. This debt is likely to not have been settled. "
+        "For cases where Xero is not correctly updated and is not aware of debt having been paid, please click [here](http://localhost:8501/Xero_not_up_to_date)'.")
 
+link_still_active = (df3['Adyen Status'] != "completed")
+
+df3 = df3[link_still_active]
 # st.dataframe(df3)
 ar_invoice_id = ()
 selection = st.dataframe(df3[['Invoice Number','Invoice ID', 'Invoice Date',
                                   '< 1 Month', '1 Month', '2 Months',
-                                  '3 Months', 'Older', 'Total', "Adyen Status"]],
+                                  '3 Months', 'Older', 'Total', "Adyen Status", "Customer ID", "Pet ID"]],
                              on_select="rerun", selection_mode="single-row")
 # Display the selected row(s)
 if selection:
@@ -192,23 +197,6 @@ if selection:
 
             ar_pet_id_newish = st.sidebar.text_input("Please enter an ezyVet Pet Id", key='customer_id_input')
 
-        #     # Check if the user provided a new Customer ID
-        #     if ar_pet_id_newish:
-        #         # Run the rest of your code here using the provided Pet ID
-        #         st.sidebar.write(f"Proceeding with Pet ID: {ar_pet_id_newish}")
-        #         ar_pet_id = ar_pet_id_newish
-        #     else:
-        #         st.warning("Please enter a valid Pet ID to proceed.")
-        # else:
-        #     # Run the rest of your code with the retrieved Customer ID
-        #     st.write(f"Proceeding with Pet ID: {ar_pet_id}")
-
-        # st.write("Pet ID: " + ar_pet_id)
-        #
-        #
-        #
-        #
-        # st.write("Pet ID: " + ar_pet_id)
 
         pet_data = functions.get_pet_data(eV_animals)
 
@@ -226,7 +214,7 @@ if selection:
 
         # st.write(ar_pet_name)
 
-        st.write(ar_pet_id)
+        # st.write(ar_pet_id)
         try:
             ar_invoices = functions.get_invoices(ar_pet_id)
 
@@ -239,7 +227,7 @@ if selection:
             print("No invoice is NOT found")
             st.warning("No invoice is found for this pet. Please ensure that you have the latest version of the Invoice export from ezyVet")
 
-        st.dataframe(ar_invoices)
+        # st.dataframe(ar_invoices)
 
         # st.write(ar_first_name)
         # st.write(ar_last_name)
@@ -252,6 +240,8 @@ if selection:
         # Add filters in separate columns
         with col1:
             st.markdown("##### Outstanding amount: " + ar_amount)
+            st.markdown("##### Customer ID: " + ar_customer_id)
+            st.markdown("##### Pet ID: " + ar_pet_id)
 
 
         with col3:

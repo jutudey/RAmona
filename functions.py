@@ -4,6 +4,7 @@ import sqlite3
 import pandas as pd
 from PIL import Image
 import re
+import os
 
 def set_page_definitition():
     app_name = "RAmona v0.1"
@@ -227,9 +228,47 @@ def get_invoices_wo_subsc(pet_id):
     conn.close()
     return df
 
+
+#----------------------------------------------------
+# File management
+#----------------------------------------------------
+
+def list_all_files_in_data_folder():
+    folder_path = "data"
+    try:
+        files = sorted(os.listdir(folder_path))
+        file_list = [file for file in files if not (file.startswith("~") or file.startswith("."))]
+        return file_list
+    except FileNotFoundError:
+        return [f"The folder '{folder_path}' does not exist."]
+    except Exception as e:
+        return [f"An error occurred: {e}"]
+
+def load_newest_file(filename_prefix):
+    folder_path = "data"
+    try:
+        files = os.listdir(folder_path)
+        invoice_files = [file for file in files if file.startswith(filename_prefix)]
+        if invoice_files:
+            highest_file = max(invoice_files)
+            print(highest_file)
+            file_path = os.path.join(folder_path, highest_file)
+            if highest_file.endswith(".csv"):
+                df = pd.read_csv(file_path)
+                return df
+            elif highest_file.endswith(".xlsx"):
+                df = pd.read_excel(file_path)
+                return df
+    except FileNotFoundError:
+        print(f"The folder '{folder_path}' does not exist.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 #----------------------------------------------------
 # Load data (ETL)
 #----------------------------------------------------
+
+
 
 def get_pet_data(file_path):
     df = pd.read_csv(file_path, index_col=0)
