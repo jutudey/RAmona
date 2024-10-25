@@ -13,7 +13,7 @@ eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
 
 
 #----------------------------------------------------
-# Import Adyen links
+# Import Adyen links - df1
 #----------------------------------------------------
 
 df1 = functions.load_adyen_links(PaymentLinks)
@@ -30,7 +30,6 @@ df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 # Import Xero AR data - df3
 #----------------------------------------------------
 
-st.subheader("Xero Aged Receivables")
 df3 = functions.load_xero_AR_report(XeroARreport)
 
 
@@ -40,8 +39,8 @@ df3 = df3.merge(df1, left_on='Invoice Reference', right_on='id', how='left')
 # If you don't need the 'id' column from df2 in df3, you can drop it
 # df3.drop('id', axis=1, inplace=True)
 
-# st.dataframe(df3)
-st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months', '3 Months', 'Older', 'Total', "Adyen Status"]])
+st.dataframe(df3)
+# st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months', '3 Months', 'Older', 'Total', "Adyen Status"]])
 # ])
 # st.write(len(df3))
 
@@ -53,39 +52,38 @@ st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months
 
 df2 = functions.load_xero_PAYGrec_report(XeroPAYGrecReport)
 
-st.dataframe(df2)
+
+
+# Use df3.index instead of df3['Invoice Number']
+df2.loc[df2['Invoice Number'].isin(df3.index), 'Status'] = 'Unpaid'
+
+# Use df3.index instead of df3['Invoice Number']
+df2.loc[~df2['Invoice Number'].isin(df3.index), 'Status'] = 'Paid'
+
+
+# st.dataframe(df2)
 # st.write(len(df2))
-
-# Update Status in df2 where Invoice Number exists in df3
-df2.loc[df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Unpaid'
-
-# Set Status to 'Paid' for rows where Invoice Number is not found in df3
-df2.loc[~df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Paid'
-
-
-
-
 
 
 
 
 #----------------------------------------------------
-# Merging tables
+# Merging tables (PAYG details into Adyen Links table)
 #----------------------------------------------------
 
 # All PAYG links that are in both
 in_both = df1.merge(df2, how='inner', left_on='id', right_on='Adyen Ref ID')
 # st.subheader("merged data")
-# st.dataframe(in_both)
+st.dataframe(in_both)
 # st.write(len(in_both))
 
 # st.subheader("Easily matched (using payment link ID")
 
 in_both_display = in_both[["Invoice Number",
-                           "status", "Status", "Link Type", "creationDate",
+                           "Adyen Status", "Status", "Link Type", "creationDate",
                            "amount", "Description", "Customer ID", "Pet ID"]]
-# st.dataframe(in_both_display)
-# st.write(len(in_both_display))
+st.dataframe(in_both_display)
+st.write(len(in_both_display))
 
 # st.subheader("Only in Adyen")
 
@@ -95,19 +93,31 @@ df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left'
 
 
 #----------------------------------------------------
+# Present AR report to user and select invoice to investigate
+#----------------------------------------------------
+
+st.subheader("Xero Aged Receivables")
+
+# st.dataframe(df3)
+st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months', '3 Months', 'Older', 'Total', "Adyen Status"]])
+# ])
+
+
+#----------------------------------------------------
 # Search for invoice details
 #----------------------------------------------------
 
 
-st.sidebar.subheader("Select an invoice")
-
-# Create a text input to search by invoice id
-# ar_invoice = st.sidebar.text_input('Enter Invoice ID:', '')
-
-selected_ar_invoice = st.sidebar.selectbox('',
-                                        df3["Invoice Number"].astype(str))
-selected_contact_code = selected_ar_invoice.split(' - ')[0]
-ar_invoice_id = selected_ar_invoice
+# st.sidebar.subheader("Select an invoice")
+#
+# # Create a text input to search by invoice id
+# # ar_invoice = st.sidebar.text_input('Enter Invoice ID:', '')
+#
+# selected_ar_invoice = st.sidebar.selectbox('', df3.index)
+#
+# selected_contact_code = selected_ar_invoice.split(' - ')[0]
+# ar_invoice_id = selected_ar_invoice
+ar_invoice_id = "INV-11259"
 
 # ar_invoice = "INV-6149"
 # st.sidebar.subheader(ar_invoice)
