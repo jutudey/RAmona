@@ -240,6 +240,8 @@ def get_pet_data(file_path):
 
 def load_adyen_links(file_path):
   df = pd.read_csv(file_path, index_col=0)
+  df.drop(columns=['description', 'store', 'reusable'], inplace=True)
+  df.rename(columns={"status": "Adyen Status"}, inplace=True)
 
   # identifies VERA Toolbox links as PAYG
   def set_link_type(row):
@@ -336,21 +338,38 @@ def load_xero_PAYGrec_report(file_path):
 
 def load_xero_AR_report(file_path):
     df = pd.read_excel(file_path, skiprows=7, header=0).drop([0, 1])
-    df = df[~df['Contact Account Number'].isin(["Total PAYG Client", "Percentage of total", "Total", "PetCare Advanced PAYG"])]
-    df = df.dropna(how='all')
+    df.set_index("Invoice Number", inplace=True)
+    df = df[~df['Contact Account Number'].isin(
+        ["Total PAYG Client", "Percentage of total", "Total", "PetCare Advanced PAYG"])]
+    df = df.dropna(how='any', subset="Invoice Date")
+    df.drop(columns=["Contact Account Number"], inplace=True)
+    df.drop(columns=["Due Date"], inplace=True)
+    # Convert a Date column to datetime and format it to 'YYYY-MM-DD'
+    df['Invoice Date'] = pd.to_datetime(df['Invoice Date']).dt.strftime('%Y-%m-%d')
+    # Round all numeric columns to 2 decimal places
+    df = df.round(2)
+    # Apply formatting for all relevant columns to ensure 2 decimal places
+    df["< 1 Month"] = df["< 1 Month"].round(2)
+    df["1 Month"] = df["1 Month"].round(2)
+    df["2 Months"] = df["2 Months"].round(2)
+    df["3 Months"] = df["3 Months"].round(2)
+    df["Older"] = df["Older"].round(2)
+    df["Total"] = df["Total"].round(2)
 
-    # # Cleaning up the ref ID
-    # # Define a helper function
-    # def process_reference(value):
-    #     if isinstance(value, str) and value.startswith('PL:'):
-    #         return value[3:]
-    #     else:
-    #         return np.nan
-    #
-    # # Apply the helper function to the "Reference" column to create the new column
-    # df['Adyen Ref ID'] = df['Reference'].apply(process_reference)
-    #
-    # # add VAT to the amount
-    # df['Amount (incl VAT)'] = (df['Credit (Source)'] * 1.20).round(2)
+    # Force all columns to display 2 decimals
+    df[["< 1 Month", "1 Month", "2 Months", "3 Months", "Older", "Total"]] = df[
+        ["< 1 Month", "1 Month", "2 Months", "3 Months", "Older", "Total"]].applymap(lambda x: f'{x:,.2f}')
+
+    # Cleaning up the ref ID
+    # Define a helper function
+    def process_reference(value):
+        if isinstance(value, str) and value.startswith('PL:'):
+            return value[3:]
+        else:
+            return np.nan
+
+    # Apply the helper function to the "Reference" column to create the new column
+    df['Invoice Reference'] = df['Invoice Reference'].apply(process_reference)
+
 
     return df

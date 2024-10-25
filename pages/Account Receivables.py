@@ -23,21 +23,38 @@ df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 
 # st.subheader("Adyen PAYG Payment Links - df1")
 # st.write("Payment links related to failed subscription payments have been disregarded")
-st.dataframe(df1)
+# st.dataframe(df1)
 # st.write(len(df1))
 
 #----------------------------------------------------
-# Import Xero PAYG data
+# Import Xero AR data - df3
 #----------------------------------------------------
 
-st.subheader("Xero Accounts Receivables report")
+st.subheader("Xero Aged Receivables")
 df3 = functions.load_xero_AR_report(XeroARreport)
-st.dataframe(df3)
+
+
+# Merge df2 into df3 based on matching columns
+df3 = df3.merge(df1, left_on='Invoice Reference', right_on='id', how='left')
+
+# If you don't need the 'id' column from df2 in df3, you can drop it
+# df3.drop('id', axis=1, inplace=True)
+
+# st.dataframe(df3)
+st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months', '3 Months', 'Older', 'Total', "Adyen Status"]])
+# ])
 # st.write(len(df3))
+
+#----------------------------------------------------
+# Import Xll Xero PAYG invoices - df2
+#----------------------------------------------------
 
 # st.subheader("All Xero PAYG invoices - df2")
 
 df2 = functions.load_xero_PAYGrec_report(XeroPAYGrecReport)
+
+st.dataframe(df2)
+# st.write(len(df2))
 
 # Update Status in df2 where Invoice Number exists in df3
 df2.loc[df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Unpaid'
@@ -45,8 +62,7 @@ df2.loc[df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Unpaid'
 # Set Status to 'Paid' for rows where Invoice Number is not found in df3
 df2.loc[~df2['Invoice Number'].isin(df3['Invoice Number']), 'Status'] = 'Paid'
 
-# st.dataframe(df2)
-# st.write(len(df2))
+
 
 
 
