@@ -465,6 +465,11 @@ def extract_tl_Invoices():
         "tl_Event": "first"  # Event remains consistent within each invoice
     })
 
+    # Update tl_Discount if tl_Revenue is less than tl_Cost
+    aggregated_invoices.loc[aggregated_invoices["tl_Revenue"] < aggregated_invoices["tl_Cost"], "tl_Discount"] = (
+        aggregated_invoices["tl_Cost"] - aggregated_invoices["tl_Revenue"]
+    ).round(2)
+
     # Round the sums to 2 decimal places
     aggregated_invoices["tl_Cost"] = aggregated_invoices["tl_Cost"].round(2)
     aggregated_invoices["tl_Discount"] = aggregated_invoices["tl_Discount"].round(2)
@@ -472,6 +477,7 @@ def extract_tl_Invoices():
 
     # return the aggregated DataFrame
     return aggregated_invoices
+
 
 def extract_tl_Cancellations():
 
