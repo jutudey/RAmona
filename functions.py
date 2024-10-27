@@ -478,6 +478,53 @@ def extract_tl_Invoices():
     # return the aggregated DataFrame
     return aggregated_invoices
 
+def extract_tl_pet_data():
+    filename_prefix = "Animals-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    # formatting datatypes
+    df["Animal Record Created At"] = pd.to_datetime(df["Animal Record Created At"], format="%Y-%m-%d %H:%M:%S")
+    df["Date of Passing"] = pd.to_datetime(df["Date of Passing"], format="%d-%m-%Y")
+    df["Animal Code"] = df["Animal Code"].astype(str).str.split('.').str[0]
+    df["Owner Contact Code"] = df["Owner Contact Code"].astype(str)
+
+    # filtering the data
+    df = df[(df["Has Passed Away"] == "Yes")]
+
+
+    # adding new columns
+    df = df.assign(
+        tl_ID=df["Animal Code"],
+        tl_Date=df["Date of Passing"],
+        tl_CustomerID=df["Owner Contact Code"],
+        tl_CustomerName=df["Owner First Name"] + " " + df["Owner Last Name"],
+        tl_PetID=df["Animal Code"],
+        tl_PetName=df["Animal Name"],
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=0,
+        tl_Event="Pet passed away"
+    )
+
+    # Reducing the DataFrame and grouping by "tl_ID"
+    dead_pets = df[["tl_ID",
+                    "tl_Date",
+                    "tl_CustomerID",
+                    "tl_CustomerName",
+                    "tl_PetID",
+                    "tl_PetName",
+                    "tl_Cost",
+                    "tl_Discount",
+                    "tl_Revenue",
+                    "tl_Event"
+                    ]]
+
+
+    # return the aggregated DataFrame
+    return dead_pets
+
 
 def extract_tl_Cancellations():
 
