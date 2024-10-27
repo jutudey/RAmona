@@ -48,41 +48,45 @@ if first_name or last_name:
     else:
         st.write("No contacts found with the given name(s).")
 
-st.header(contact_code)
+st.header(f" {contact_data.iloc[0]['Contact First Name']} {contact_data.iloc[0]['Contact Last Name']}")
 
-# Collect Pet details
+# Collect Pet ID
 pet_data = functions.get_pet_details(contact_code)
 print(pet_data)
 
 if not pet_data.empty:
     st.write("### Pet Details:")
     st.markdown(pet_data.to_markdown(index=False), unsafe_allow_html=True)
-    if len(pet_data)>1:
-        selected_pet_id = st.radio("Select Pet ID:", pet_data['Pet ID'], horizontal=True)
-    else:
-        selected_pet_id = pet_data['Pet ID'].values[0]
 
-    selected_pet_name = pet_data.loc[pet_data['Pet ID'] == selected_pet_id, 'Name'].values[0]
+    if len(pet_data) > 1:
+        # Show only names in the radio button
+        selected_pet_name = st.radio("Select Pet:", pet_data['Name'], horizontal=True)
+
+        # Retrieve the corresponding pet ID for the selected name
+        selected_pet_id = pet_data.loc[pet_data['Name'] == selected_pet_name, 'Pet ID'].values[0]
+        selected_pet_id = str(selected_pet_id)  # Convert to string
+    else:
+        selected_pet_id = str(pet_data['Pet ID'].values[0])  # Convert directly to string
+
+    # Select pet name based on the string `selected_pet_id`
+    selected_pet_name = pet_data.loc[pet_data['Pet ID'].astype(str) == selected_pet_id, 'Name'].values[0]
+
+    # Print and display the selected pet details
     print(selected_pet_name)
     print(selected_pet_id)
     st.write(f"### Selected pet : {selected_pet_name}")
 
-    # incl_subsc = st.radio("Include Subscription invoices", ("No", "Yes"))
-    #
-    # if incl_subsc == "No":
-    #     payg_invoices = functions.get_invoices_wo_subsc(selected_pet_id)
-    #     if not payg_invoices.empty:
-    #         # selected_pet_name = pet_data.loc[pet_data['Pet ID'] == selected_pet_id, 'Name'].values[0]
-    #         st.markdown(payg_invoices.to_markdown(index=False), unsafe_allow_html=True)
-    #     else:
-    #         st.write("All invoices are Subscription invoices.")
-    #
-    # if incl_subsc == "Yes":
-    #     all_invoices = functions.get_invoices(selected_pet_id)
-    #     if not all_invoices.empty:
-    #         st.markdown(all_invoices.to_markdown(index=False), unsafe_allow_html=True)
-    #     else:
-    #         st.write("No invoices found for the selected pet.")
-    # else:
-    #     st.write("No pets found for this customer.")
+    # import data for TimeLine
+    tl_invoices = functions.extract_tl_Invoices()
+
+    # filter by pet ID
+    filt = (tl_invoices["tl_PetID"] == selected_pet_id)
+    tl_for_pet = tl_invoices[filt]
+
+    # show timeline data for selected pet
+
+    st.dataframe(tl_for_pet)
+
+
+    st.dataframe(tl_invoices)
 

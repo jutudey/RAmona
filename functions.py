@@ -254,7 +254,7 @@ def load_newest_file(filename_prefix):
             print(highest_file)
             file_path = os.path.join(folder_path, highest_file)
             if highest_file.endswith(".csv"):
-                df = pd.read_csv(file_path)
+                df = pd.read_csv(file_path, low_memory=False)
                 return df
             elif highest_file.endswith(".xlsx"):
                 df = pd.read_excel(file_path)
@@ -410,3 +410,78 @@ def load_xero_AR_report(file_path):
     df = df[df['Total'] != 0.01]
 
     return df
+
+
+#----------------------------------------------------
+# Prepare data for Client Timeline
+#----------------------------------------------------
+
+def extract_tl_Invoices():
+    filename_prefix = "Invoice Lines-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    # formatting datatypes
+    df["Invoice #"] = df["Invoice #"].astype(str)
+    df["Animal Code"] = df["Animal Code"].astype(str).str.split('.').str[0]
+    df["Client Contact Code"] = df["Client Contact Code"].astype(str)
+    df["Invoice Date"] = pd.to_datetime(df["Invoice Date"], format="%d-%m-%Y")
+
+    # Cleaning the data
+    df = df[(df["Type"] != "Header") &
+            (df["Product Name"] != "Subscription Fee") &
+            (df["Product Name"] != "Cancellation Fee") &
+            (df["Client Contact Code"] != "ezyVet") &
+            ~df["First Name"].isin(["GVAK"])]
+
+    # Grouping and adding sums, and renaming columns in one go
+    df = df.assign(
+        tl_ID=df["Invoice #"],
+        tl_Date=df["Invoice Date"],
+        tl_CustomerID=df["Client Contact Code"],
+        tl_CustomerName=df["First Name"] + " " + df["Last Name"],
+        tl_PetID=df["Animal Code"],
+        tl_PetName=df["Animal Name"],
+        tl_Cost=df.groupby("Invoice #")["Product Cost"].transform('sum').round(2),
+        tl_Discount=df.groupby("Invoice #")["Discount(£)"].transform('sum').round(2),
+        tl_Revenue=df.groupby("Invoice #")["Total Invoiced (incl)"].transform('sum').round(2)
+    )
+
+    # Reducing the DataFrame and grouping by "tl_ID"
+    aggregated_invoices = df[[
+        "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue"
+    ]].groupby("tl_ID", as_index=False).agg({
+        "tl_Date": "max",  # Latest date per group
+        "tl_CustomerID": "first",  # Customer ID remains consistent within each invoice
+        "tl_CustomerName": "first",  # Customer name remains consistent within each invoice
+        "tl_PetID": "first",  # First Pet ID if multiple exist
+        "tl_PetName": "first",  # First Pet Name
+        "tl_Cost": "sum",  # Sum of costs for each invoice
+        "tl_Discount": "sum",  # Sum of discounts for each invoice
+        "tl_Revenue": "sum"  # Sum of revenues for each invoice
+    })
+
+    # Round the sums to 2 decimal places
+    aggregated_invoices["tl_Cost"] = aggregated_invoices["tl_Cost"].round(2)
+    aggregated_invoices["tl_Discount"] = aggregated_invoices["tl_Discount"].round(2)
+    aggregated_invoices["tl_Revenue"] = aggregated_invoices["tl_Revenue"].round(2)
+
+    # return the aggregated DataFrame
+    return aggregated_invoices
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
