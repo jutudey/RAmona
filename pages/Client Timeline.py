@@ -3,14 +3,19 @@ import sqlite3
 import pandas as pd
 import functions
 import json
+import matplotlib.pyplot as plt
+
 from PIL import Image
 
 app_name=functions.set_page_definitition()
 
 st.title("Client Timeline for Pet")
 
-# Streamlit app with sidebar navigation
-# st.sidebar.title(app_name)
+
+#----------------------------------------------------
+# Search for client details
+#----------------------------------------------------
+
 
 st.sidebar.subheader("Search for client")
 
@@ -22,8 +27,6 @@ first_name = st.sidebar.text_input('Enter First Name:', '')
 
 # Add a search box for Last Name
 last_name = st.sidebar.text_input('Enter Last Name:', '')
-
-
 
 # Search by names
 if first_name or last_name:
@@ -51,7 +54,10 @@ if first_name or last_name:
 
 st.header(f" {contact_data.iloc[0]['Contact First Name']} {contact_data.iloc[0]['Contact Last Name']}")
 
-# Collect Pet ID
+#----------------------------------------------------
+# select Pet
+#----------------------------------------------------
+
 pet_data = functions.get_pet_details(contact_code)
 print(pet_data)
 
@@ -77,6 +83,10 @@ if not pet_data.empty:
     print(selected_pet_id)
     st.write(f"### Selected pet : {selected_pet_name}")
 
+    # ----------------------------------------------------
+    # Prepare data for Client Timeline
+    # ----------------------------------------------------
+
     # import data for TimeLine
     tl_invoices = functions.extract_tl_Invoices()
 
@@ -84,30 +94,52 @@ if not pet_data.empty:
     filt = (tl_invoices["tl_PetID"] == selected_pet_id)
     tl_for_pet = tl_invoices[filt]
 
-    # show timeline data for selected pet
+    # ----------------------------------------------------
+    # show events on the timeline data for the selected pet
+    # ----------------------------------------------------
 
     st.dataframe(tl_for_pet)
+
+    # ----------------------------------------------------
+    # Display visual timeline for the selected pet
+    # ----------------------------------------------------
 
     # Ensure the tl_Date column is in datetime format
     tl_for_pet['tl_Date'] = pd.to_datetime(tl_for_pet['tl_Date'])
 
     # Extract relevant data and convert it to a list of dictionaries
     timeline_items = [
-        {"Event": row['tl_Event'], "Date": row['tl_Date'].strftime('%Y-%m-%d')}
-        for _, row in tl_for_pet.iterrows()
+        {"Event": row['tl_Event'], "Date": row['tl_Date']} for _, row in tl_for_pet.iterrows()
     ]
 
-    # Convert to JSON if needed
-    timeline_json = json.dumps(timeline_items)
+    # Plot the events on a horizontal line with markers
+    fig, ax = plt.subplots(figsize=(12, 2))
 
-    # Printing for verification
-    st.write(timeline_items)
-    st.write(timeline_json)
+    # Draw a horizontal line
+    ax.hlines(y=0, xmin=min(tl_for_pet['tl_Date']), xmax=max(tl_for_pet['tl_Date']), color='black', linewidth=1)
 
+    # Add markers for each event
+    ax.plot(tl_for_pet['tl_Date'], [0] * len(tl_for_pet), "o", color='blue')
 
+    # Annotate each event with event names
+    for idx, row in tl_for_pet.iterrows():
+        ax.text(row['tl_Date'], 0.1, row['tl_Event'], ha="center", va="bottom", fontsize=9, rotation=45)
 
+    # Remove y-axis and adjust x-axis
+    ax.get_yaxis().set_visible(False)
+    ax.set_xlabel("Date")
+    plt.xticks(rotation=45)
 
+    # Set limits and labels
+    ax.set_ylim(-0.5, 1)
+    ax.set_yticks([])
+
+    # Display the figure in Streamlit
+    st.pyplot(fig)
+
+    # ----------------------------------------------------
+    # Showing the full dataframe
+    # ----------------------------------------------------
 
 
     st.dataframe(tl_invoices)
-
