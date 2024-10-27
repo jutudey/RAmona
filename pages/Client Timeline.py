@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import functions
+import json
 from PIL import Image
 
 app_name=functions.set_page_definitition()
@@ -86,6 +87,26 @@ if not pet_data.empty:
     # show timeline data for selected pet
 
     st.dataframe(tl_for_pet)
+
+    # Ensure the tl_Date column is in datetime format
+    tl_for_pet['tl_Date'] = pd.to_datetime(tl_for_pet['tl_Date'])
+
+    # Extract relevant data and convert it to a list of dictionaries
+    timeline_items = [
+        {"Event": row['tl_Event'], "Date": row['tl_Date'].strftime('%Y-%m-%d')}
+        for _, row in tl_for_pet.iterrows()
+    ]
+
+    # Convert to JSON if needed
+    timeline_json = json.dumps(timeline_items)
+
+    # Printing for verification
+    st.write(timeline_items)
+    st.write(timeline_json)
+
+
+
+
 
 
     st.dataframe(tl_invoices)

@@ -444,14 +444,15 @@ def extract_tl_Invoices():
         tl_PetID=df["Animal Code"],
         tl_PetName=df["Animal Name"],
         tl_Cost=df.groupby("Invoice #")["Product Cost"].transform('sum').round(2),
-        tl_Discount=df.groupby("Invoice #")["Discount(£)"].transform('sum').round(2),
-        tl_Revenue=df.groupby("Invoice #")["Total Invoiced (incl)"].transform('sum').round(2)
+        tl_Discount=df.groupby("Invoice #")["Discount(\u00a3)"].transform('sum').round(2),
+        tl_Revenue=df.groupby("Invoice #")["Total Invoiced (incl)"].transform('sum').round(2),
+        tl_Event="ezyVet Invoice"
     )
 
     # Reducing the DataFrame and grouping by "tl_ID"
     aggregated_invoices = df[[
         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
-        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue"
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
     ]].groupby("tl_ID", as_index=False).agg({
         "tl_Date": "max",  # Latest date per group
         "tl_CustomerID": "first",  # Customer ID remains consistent within each invoice
@@ -460,7 +461,8 @@ def extract_tl_Invoices():
         "tl_PetName": "first",  # First Pet Name
         "tl_Cost": "sum",  # Sum of costs for each invoice
         "tl_Discount": "sum",  # Sum of discounts for each invoice
-        "tl_Revenue": "sum"  # Sum of revenues for each invoice
+        "tl_Revenue": "sum",  # Sum of revenues for each invoice
+        "tl_Event": "first"  # Event remains consistent within each invoice
     })
 
     # Round the sums to 2 decimal places
@@ -470,6 +472,7 @@ def extract_tl_Invoices():
 
     # return the aggregated DataFrame
     return aggregated_invoices
+
 
 
 
