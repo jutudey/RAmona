@@ -432,7 +432,7 @@ def extract_tl_Invoices():
     df = df[(df["Type"] != "Header") &
             (df["Product Name"] != "Subscription Fee") &
             (df["Product Name"] != "Cancellation Fee") &
-            (df["Client Contact Code"] != "ezyVet") &
+            (df["Product Name"] != "Cancellation Fee") &
             ~df["First Name"].isin(["GVAK"])]
 
     # Grouping and adding sums, and renaming columns in one go
@@ -472,6 +472,68 @@ def extract_tl_Invoices():
 
     # return the aggregated DataFrame
     return aggregated_invoices
+
+def extract_tl_Cancellations():
+
+# ----------------------------------------------------
+# NOTE - Zero priced Cancellation Fees in ezyVet indicates
+# a change of Wellness Plan
+# ----------------------------------------------------
+
+
+    filename_prefix = "Invoice Lines-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    # formatting datatypes
+    df["Invoice #"] = df["Invoice #"].astype(str)
+    df["Animal Code"] = df["Animal Code"].astype(str).str.split('.').str[0]
+    df["Client Contact Code"] = df["Client Contact Code"].astype(str)
+    df["Invoice Date"] = pd.to_datetime(df["Invoice Date"], format="%d-%m-%Y")
+
+    # Cleaning the data
+    df = df[(df["Type"] != "Header") &
+            (df["Product Name"] == "Cancellation Fee") &
+            (df["Total Invoiced (incl)"] == 0)]
+
+    # Grouping and adding sums, and renaming columns in one go
+    df = df.assign(
+        tl_ID=df["Invoice #"],
+        tl_Date=df["Invoice Date"],
+        tl_CustomerID=df["Client Contact Code"],
+        tl_CustomerName=df["First Name"] + " " + df["Last Name"],
+        tl_PetID=df["Animal Code"],
+        tl_PetName=df["Animal Name"],
+        tl_Cost=df.groupby("Invoice #")["Product Cost"].transform('sum').round(2),
+        tl_Discount=df.groupby("Invoice #")["Discount(\u00a3)"].transform('sum').round(2),
+        tl_Revenue=df.groupby("Invoice #")["Total Invoiced (incl)"].transform('sum').round(2),
+        tl_Event="Changed PetCare Plan in ezyVet"
+        )
+
+    # Reducing the DataFrame and grouping by "tl_ID"
+    cancellations = df[[
+        "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
+    ]].groupby("tl_ID", as_index=False).agg({
+        "tl_Date": "max",  # Latest date per group
+        "tl_CustomerID": "first",  # Customer ID remains consistent within each invoice
+        "tl_CustomerName": "first",  # Customer name remains consistent within each invoice
+        "tl_PetID": "first",  # First Pet ID if multiple exist
+        "tl_PetName": "first",  # First Pet Name
+        "tl_Cost": "sum",  # Sum of costs for each invoice
+        "tl_Discount": "sum",  # Sum of discounts for each invoice
+        "tl_Revenue": "sum",  # Sum of revenues for each invoice
+        "tl_Event": "first"  # Event remains consistent within each invoice
+    })
+
+    # Round the sums to 2 decimal places
+    cancellations["tl_Cost"] = cancellations["tl_Cost"].round(2)
+    cancellations["tl_Discount"] = cancellations["tl_Discount"].round(2)
+    cancellations["tl_Revenue"] = cancellations["tl_Revenue"].round(2)
+
+    # return the aggregated DataFrame
+    return cancellations
 
 
 

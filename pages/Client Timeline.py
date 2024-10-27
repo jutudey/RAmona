@@ -89,10 +89,22 @@ if not pet_data.empty:
 
     # import data for TimeLine
     tl_invoices = functions.extract_tl_Invoices()
+    tl_change_plan = functions.extract_tl_Cancellations()
+
+    # Concatenate the DataFrames
+    merged_df = pd.concat([tl_invoices, tl_change_plan], ignore_index=True)
+
+    # Sort the merged DataFrame by the 'date' column
+    tl = merged_df.sort_values(by='tl_Date',
+                                             ascending=True)  # Set ascending=False if you want descending order
+
+    # Display the sorted DataFrame
+    st.dataframe(tl)
+
 
     # filter by pet ID
-    filt = (tl_invoices["tl_PetID"] == selected_pet_id)
-    tl_for_pet = tl_invoices[filt]
+    filt = (tl["tl_PetID"] == selected_pet_id)
+    tl_for_pet = tl[filt]
 
     # ----------------------------------------------------
     # show events on the timeline data for the selected pet
