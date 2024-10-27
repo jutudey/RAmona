@@ -4,6 +4,7 @@ import pandas as pd
 import functions
 import json
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 from PIL import Image
 
@@ -98,9 +99,6 @@ if not pet_data.empty:
     tl = merged_df.sort_values(by='tl_Date',
                                              ascending=True)  # Set ascending=False if you want descending order
 
-    # Display the sorted DataFrame
-    st.dataframe(tl)
-
 
     # filter by pet ID
     filt = (tl["tl_PetID"] == selected_pet_id)
@@ -124,26 +122,46 @@ if not pet_data.empty:
         {"Event": row['tl_Event'], "Date": row['tl_Date']} for _, row in tl_for_pet.iterrows()
     ]
 
+    # Define a color map for each event type
+    event_types = tl_for_pet['tl_Event'].unique()
+    colors = plt.cm.get_cmap('tab10', len(event_types))  # Get a colormap with enough colors for each unique event type
+    event_color_map = {event: colors(i) for i, event in enumerate(event_types)}
+
     # Plot the events on a horizontal line with markers
-    fig, ax = plt.subplots(figsize=(12, 2))
+    fig, ax = plt.subplots(figsize=(12, 3))
 
     # Draw a horizontal line
-    ax.hlines(y=0, xmin=min(tl_for_pet['tl_Date']), xmax=max(tl_for_pet['tl_Date']), color='black', linewidth=1)
+    ax.hlines(y=0, xmin=min(tl_for_pet['tl_Date']), xmax=max(tl_for_pet['tl_Date']), color='grey', linewidth=0.5)
 
-    # Add markers for each event
-    ax.plot(tl_for_pet['tl_Date'], [0] * len(tl_for_pet), "o", color='blue')
+    # Add markers for each event with different colors
+    for idx, row in tl_for_pet.iterrows():
+        ax.plot(row['tl_Date'], 0, "o", color=event_color_map[row['tl_Event']])
 
     # Annotate each event with event names
     for idx, row in tl_for_pet.iterrows():
-        ax.text(row['tl_Date'], 0.1, row['tl_Event'], ha="center", va="bottom", fontsize=9, rotation=45)
+        ax.text(row['tl_Date'], 0.05, row['tl_Event'], fontname="Roboto", ha="left", va="bottom", fontsize=7,
+                rotation=40)
+
+    # Remove the frame (spines)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
     # Remove y-axis and adjust x-axis
     ax.get_yaxis().set_visible(False)
-    ax.set_xlabel("Date")
-    plt.xticks(rotation=45)
+    ax.set_xlabel("Event Date")
+    ax.tick_params(axis='x', which='both', pad=-5)  # Move tick labels closer by setting a negative pad value
+
+    # Set x-tick label positions to bring them even closer to the line
+    for tick in ax.get_xticklabels():
+        tick.set_y(-0.05)
+
+    # Format x-axis labels as "Month Year" (e.g., "March 2024")
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%B %Y'))
+
+    plt.xticks(fontsize=7, rotation=30, color='grey')
 
     # Set limits and labels
-    ax.set_ylim(-0.5, 1)
+    ax.set_ylim(-0.1, 1)
     ax.set_yticks([])
 
     # Display the figure in Streamlit
