@@ -1,8 +1,5 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
-from fontTools.ttLib.tables.S__i_l_f import pass_attrs_info
-
 import functions
 import json
 import matplotlib.pyplot as plt
@@ -106,7 +103,7 @@ if not pet_data.empty:
     tl = merged_df.sort_values(by='tl_Date',
                                              ascending=True)  # Set ascending=False if you want descending order
 
-    st.dataframe(merged_df)
+    # st.dataframe(merged_df)
 
     # filter by pet ID
     filt = (tl["tl_PetID"] == selected_pet_id)

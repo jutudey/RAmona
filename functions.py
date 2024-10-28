@@ -537,6 +537,11 @@ def extract_tl_pet_data_registration():
     df["Animal Code"] = df["Animal Code"].astype(str).str.split('.').str[0]
     df["Owner Contact Code"] = df["Owner Contact Code"].astype(str)
 
+    # filtering the data
+    df = df[(df["Owner Contact Code"] != "ezyVet")
+            & (df["Owner First Name"] != "GVAK")
+            & (df["Animal Record Created At"] > "2023-11-17 19:10:22")
+            ]
 
     # adding new columns
     df = df.assign(
