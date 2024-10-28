@@ -103,7 +103,9 @@ if not pet_data.empty:
     tl = merged_df.sort_values(by='tl_Date',
                                              ascending=True)  # Set ascending=False if you want descending order
 
-    # st.dataframe(merged_df)
+    if 'tl' not in st.session_state:
+        st.session_state.tl = tl
+    # st.dataframe(tl)
 
     # filter by pet ID
     filt = (tl["tl_PetID"] == selected_pet_id)
