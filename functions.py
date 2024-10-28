@@ -5,6 +5,7 @@ import pandas as pd
 from PIL import Image
 import re
 import os
+import datetime
 
 def set_page_definitition():
     app_name = "RAmona v0.1"
@@ -17,6 +18,128 @@ def set_page_definitition():
     # st.set_page_config(layout="wide", page_title=app_name, page_icon=":material/sound_detection_dog_barking:", initial_sidebar_state="expanded")
 
     return app_name
+
+def get_date_range(selected_option, custom_start=None, custom_end=None):
+    today = datetime.date.today()
+    today = datetime.date.today()
+
+    if selected_option == "Today":
+      start_date = today
+      end_date = today
+    elif selected_option == "This Week":
+      start_date = today - datetime.timedelta(days=today.weekday())  # Start of the week (Monday)
+      end_date = today
+    elif selected_option == "This Week-to-date":
+      start_date = today - datetime.timedelta(days=today.weekday())
+      end_date = today
+    elif selected_option == "This Month":
+      start_date = today.replace(day=1)  # First day of this month
+      end_date = today
+    elif selected_option == "This Month-to-date":
+      start_date = today.replace(day=1)
+      end_date = today
+    elif selected_option == "This Quarter":
+      current_month = today.month
+      quarter_start_month = current_month - (current_month - 1) % 3
+      start_date = today.replace(month=quarter_start_month, day=1)
+      end_date = today
+    elif selected_option == "This Quarter-to-date":
+      current_month = today.month
+      quarter_start_month = current_month - (current_month - 1) % 3
+      start_date = today.replace(month=quarter_start_month, day=1)
+      end_date = today
+    elif selected_option == "This Year":
+      start_date = today.replace(month=1, day=1)  # First day of this year
+      end_date = today
+    elif selected_option == "This Year-to-date":
+      start_date = today.replace(month=1, day=1)
+      end_date = today
+    elif selected_option == "This Year-to-last-month":
+      start_date = today.replace(month=1, day=1)
+      end_date = today.replace(month=today.month - 1, day=1) - datetime.timedelta(days=1)
+    elif selected_option == "Yesterday":
+      start_date = today - datetime.timedelta(days=1)
+      end_date = today - datetime.timedelta(days=1)
+    elif selected_option == "Recent":
+      # Placeholder for "Recent" - you can define your own range here
+      start_date = today - datetime.timedelta(days=7)
+      end_date = today
+    elif selected_option == "Last Week":
+      start_date = today - datetime.timedelta(days=today.weekday() + 7)
+      end_date = start_date + datetime.timedelta(days=6)
+    elif selected_option == "Last Week-to-date":
+      start_date = today - datetime.timedelta(days=today.weekday() + 7)
+      end_date = today - datetime.timedelta(days=today.weekday() + 1)
+    elif selected_option == "Last Month":
+      first_day_of_this_month = today.replace(day=1)
+      start_date = first_day_of_this_month - datetime.timedelta(days=1)  # Last day of the previous month
+      start_date = start_date.replace(day=1)  # First day of the previous month
+      end_date = first_day_of_this_month - datetime.timedelta(days=1)
+    elif selected_option == "Last Month-to-date":
+      first_day_of_this_month = today.replace(day=1)
+      start_date = first_day_of_this_month - datetime.timedelta(days=1)
+      start_date = start_date.replace(day=1)
+      end_date = today - datetime.timedelta(days=today.day)
+    elif selected_option == "Last Quarter":
+      current_month = today.month
+      quarter_start_month = current_month - (current_month - 1) % 3
+      start_date = today.replace(month=quarter_start_month, day=1) - datetime.timedelta(days=1)
+      start_date = start_date.replace(month=start_date.month - 2, day=1)
+      end_date = today.replace(month=quarter_start_month, day=1) - datetime.timedelta(days=1)
+    elif selected_option == "Last Quarter-to-date":
+      current_month = today.month
+      quarter_start_month = current_month - (current_month - 1) % 3
+      start_date = today.replace(month=quarter_start_month, day=1) - datetime.timedelta(days=1)
+      start_date = start_date.replace(month=start_date.month - 2, day=1)
+      end_date = today
+    elif selected_option == "Last Year":
+      start_date = today.replace(year=today.year - 1, month=1, day=1)
+      end_date = today.replace(year=today.year - 1, month=12, day=31)
+    elif selected_option == "Last Year-to-date":
+      start_date = today.replace(year=today.year - 1, month=1, day=1)
+      end_date = today.replace(year=today.year - 1, month=today.month, day=today.day)
+    elif selected_option == "Since 30 Days Ago":
+      start_date = today - datetime.timedelta(days=30)
+      end_date = today
+    elif selected_option == "Since 60 Days Ago":
+      start_date = today - datetime.timedelta(days=60)
+      end_date = today
+    elif selected_option == "Since 90 Days Ago":
+      start_date = today - datetime.timedelta(days=90)
+      end_date = today
+    elif selected_option == "Since 365 Days Ago":
+      start_date = today - datetime.timedelta(days=365)
+      end_date = today
+    elif selected_option == "Next Week":
+      start_date = today + datetime.timedelta(days=(7 - today.weekday()))
+      end_date = start_date + datetime.timedelta(days=6)
+    elif selected_option == "Next 4 Weeks":
+      start_date = today
+      end_date = today + datetime.timedelta(weeks=4)
+    elif selected_option == "Next Month":
+      start_date = today.replace(day=1) + datetime.timedelta(days=32)
+      start_date = start_date.replace(day=1)
+      end_date = start_date.replace(month=start_date.month + 1, day=1) - datetime.timedelta(days=1)
+    elif selected_option == "Next Quarter":
+      current_month = today.month
+      next_quarter_start_month = ((current_month - 1) // 3 + 1) * 3 + 1
+      if next_quarter_start_month > 12:
+        next_quarter_start_month = 1
+        start_date = today.replace(year=today.year + 1, month=next_quarter_start_month, day=1)
+      else:
+        start_date = today.replace(month=next_quarter_start_month, day=1)
+      end_date = start_date + datetime.timedelta(days=90)
+    elif selected_option == "Next Year":
+      start_date = today.replace(year=today.year + 1, month=1, day=1)
+      end_date = today.replace(year=today.year + 1, month=12, day=31)
+    elif selected_option == "Custom Range":
+      if custom_start and custom_end:
+        start_date = custom_start
+        end_date = custom_end
+      else:
+        raise ValueError("Custom start and end dates must be provided for 'Custom Range'")
+
+    return start_date, end_date
 
 def get_contacts_by_name(first_name, last_name):
     conn = sqlite3.connect('ramona_db.db')
@@ -268,12 +391,9 @@ def load_newest_file(filename_prefix):
 # Load data (ETL)
 #----------------------------------------------------
 
-
-
 def get_pet_data(file_path):
     df = pd.read_csv(file_path, index_col=0)
     return df
-
 
 def load_adyen_links(file_path):
   df = pd.read_csv(file_path, index_col=0)
@@ -571,7 +691,6 @@ def extract_tl_pet_data_registration():
 
     # return the aggregated DataFrame
     return initial_registration
-
 
 def extract_tl_Cancellations():
 
