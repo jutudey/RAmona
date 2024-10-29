@@ -13,6 +13,11 @@ app_name = functions.set_page_definitition()
 # defining session states
 # ----------------------------------------------------
 
+if 'tl' not in st.session_state:
+    st.session_state.tl = functions.build_tl()
+
+if 'selected_pet_id' not in st.session_state:
+    st.session_state.selected_pet_id = ''
 
 
 st.title("Event Timeline for Pet")
@@ -95,23 +100,9 @@ if not pet_data.empty:
     # Prepare data for Client Timeline
     # ----------------------------------------------------
 
-    # import data for TimeLine
-    tl_invoices = functions.extract_tl_Invoices()
-    tl_change_plan = functions.extract_tl_Cancellations()
-    tl_pet_data = functions.extract_tl_pet_data_death()
-    tl_initial_registration = functions.extract_tl_pet_data_registration()
-
-    # Concatenate the DataFrames
-    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_data, tl_initial_registration], ignore_index=True)
 
 
-    # Sort the merged DataFrame by the 'date' column
-    tl = merged_df.sort_values(by='tl_Date',
-                                             ascending=True)  # Set ascending=False if you want descending order
 
-    if 'tl' not in st.session_state:
-        st.session_state.tl = tl
-    # st.dataframe(tl)
 
     # filter by pet ID
     filt = (tl["tl_PetID"] == selected_pet_id)

@@ -752,8 +752,23 @@ def extract_tl_Cancellations():
     # return the aggregated DataFrame
     return cancellations
 
+def build_tl():
+    # import data for TimeLine
+    tl_invoices = extract_tl_Invoices()
+    tl_change_plan = extract_tl_Cancellations()
+    tl_pet_data = extract_tl_pet_data_death()
+    tl_initial_registration = extract_tl_pet_data_registration()
 
+    # Concatenate the DataFrames
+    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_data, tl_initial_registration], ignore_index=True)
 
+    # Sort the merged DataFrame by the 'date' column
+    tl = merged_df.sort_values(by='tl_Date', ascending=True)  # Set ascending=False if you want descending order
+
+    if 'tl' not in st.session_state:
+        st.session_state.tl = 'tl'
+
+    return tl
 
 
 
