@@ -6,12 +6,11 @@ app_name=functions.set_page_definitition()
 #----------------------------------------------------
 # filepaths
 #----------------------------------------------------
-PaymentLinks = "data/paymentLinks-2024-10-22.csv"
-XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_Aged_Receivables_Detail.xlsx"
+PaymentLinks = "data/paymentLinks-2024-10-29.csv"
+XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_AR_Report_for_Ramona.xlsx"
 XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
-st.session_state.eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
+eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
 
-st.header(eV_animals)
 #----------------------------------------------------
 # Import Adyen links - df1
 #----------------------------------------------------

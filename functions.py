@@ -492,7 +492,7 @@ def load_xero_PAYGrec_report(file_path):
     return df
 
 def load_xero_AR_report(file_path):
-    df = pd.read_excel(file_path, skiprows=7, header=0).drop([0, 1])
+    df = pd.read_excel(file_path, skiprows=5, header=0).drop([0, 1])
     # df.set_index("Invoice Number", inplace=True)
     df = df[~df['Invoice Date'].isin(
         ["Total PAYG Client", "Percentage of total", "Total", "PetCare Advanced PAYG"])]
@@ -577,9 +577,9 @@ def extract_tl_Invoices():
         "tl_CustomerName": "first",  # Customer name remains consistent within each invoice
         "tl_PetID": "first",  # First Pet ID if multiple exist
         "tl_PetName": "first",  # First Pet Name
-        "tl_Cost": "sum",  # Sum of costs for each invoice
-        "tl_Discount": "sum",  # Sum of discounts for each invoice
-        "tl_Revenue": "sum",  # Sum of revenues for each invoice
+        "tl_Cost": "first",  # Sum of costs for each invoice
+        "tl_Discount": "first",  # Sum of discounts for each invoice
+        "tl_Revenue": "first",  # Sum of revenues for each invoice
         "tl_Event": "first"  # Event remains consistent within each invoice
     })
 
