@@ -99,11 +99,13 @@ if not pet_data.empty:
                 # Show only names in the radio button
                 selected_pet_name = st.radio("Select Pet:", pet_data['Name'], horizontal=True)
 
-                # Retrieve the corresponding pet ID for the selected name
-                st.session_state.selected_pet_id = pet_data.loc[pet_data['Name'] == selected_pet_name, 'Pet ID'].values[0]
-                print("value in session state for customer after reselection: " + str(st.session_state.selected_customer_id))
-                print("value in session state for pet after reselection: " + str(st.session_state.selected_pet_id))
-                print("name of pet after reselection: " + str(selected_pet_name))
+                if selected_pet_name:
+                    print("name of pet after reselection: " + str(selected_pet_name))
+                    # Retrieve the corresponding pet ID for the selected name
+                    st.session_state.selected_pet_id = pet_data.loc[pet_data['Name'] == selected_pet_name, 'Pet ID'].values[0]
+                    print("value in session state for customer after reselection: " + str(st.session_state.selected_customer_id))
+                    print("value in session state for pet after reselection: " + str(st.session_state.selected_pet_id))
+                    print("name of pet after reselection: " + str(selected_pet_name))
 
 
 
@@ -211,7 +213,7 @@ if not pet_data.empty:
 
             # Annotate each event with event names
             for idx, row in tl_for_pet.iterrows():
-                ax.text(row['tl_Date'], 0.05, row['tl_Event'], fontname="Roboto", ha="left", va="bottom", fontsize=7,
+                ax.text(row['tl_Date'], 0.05, row['tl_Event'], ha="left", va="bottom", fontsize=7,
                         rotation=40)
 
             # Remove the frame (spines)

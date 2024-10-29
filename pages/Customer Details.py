@@ -96,7 +96,9 @@ if not pet_data.empty:
     print("value in session state for pet after radio button: " + str(st.session_state.selected_pet_id))
 
     selected_pet_name = pet_data.loc[pet_data['Pet ID'] == st.session_state.selected_pet_id, 'Name'].values[0]
-    st.write(f"### Invoices for {selected_pet_name}")
+    # st.write(f"### Invoices for {selected_pet_name}")
+    st.write(f"### Invoices for {selected_pet_name} ")
+
 
     # st.header(st.session_state.selected_pet_id)
     # selected_pet_id = str(selected_pet_id)
