@@ -9,7 +9,8 @@ from PIL import Image
 
 app_name = functions.set_page_definitition()
 
-# st.header('selected_pet_id : ' + selected_pet_id)
+st.title("Event Timeline for Pet")
+#
 
 # ----------------------------------------------------
 # defining session states
@@ -20,9 +21,15 @@ if 'tl' not in st.session_state:
 
 if 'selected_pet_id' not in st.session_state:
     st.session_state.selected_pet_id = ''
+    selected_pet_id = st.session_state.selected_pet_id
 
+if 'selected_customer_id' not in st.session_state:
+    st.session_state.selected_customer_id = ''
+    selected_customer_id = st.session_state.selected_customer_id
 
-st.title("Event Timeline for Pet")
+st.header('selected_pet_id : ' + st.session_state.selected_pet_id)
+st.header('selected_customer_id : ' + st.session_state.selected_customer_id)
+
 
 # ----------------------------------------------------
 # Search for client details
@@ -31,7 +38,7 @@ st.title("Event Timeline for Pet")
 st.sidebar.subheader("Search for client")
 
 # Create a text input to search by Contact Code
-contact_code = st.sidebar.text_input('Enter Customer ID:', '')
+customer_id = st.sidebar.text_input('Enter Customer ID:', '')
 
 # Add a search box for First Name
 first_name = st.sidebar.text_input('Enter First Name:', '')
@@ -39,7 +46,7 @@ first_name = st.sidebar.text_input('Enter First Name:', '')
 # Add a search box for Last Name
 last_name = st.sidebar.text_input('Enter Last Name:', '')
 
-contact_data = pd.DataFrame()  # Initialize contact_data to avoid NameError
+customer_data = pd.DataFrame()  # Initialize contact_data to avoid NameError
 
 # Search by names
 if first_name or last_name:
@@ -49,12 +56,12 @@ if first_name or last_name:
                                         contacts_data["Contact Code"].astype(str) + ' - ' + contacts_data[
                                             "Contact First Name"] + ' ' + contacts_data["Contact Last Name"])
         selected_contact_code = selected_contact.split(' - ')[0]
-        contact_code = selected_contact_code
+        customer_id = selected_contact_code
 
         # Display contact details if Contact Code is provided
-        if contact_code:
-            contact_data = functions.get_contact_details(contact_code)
-            if not contact_data.empty:
+        if customer_id:
+            customer_data = functions.get_contact_details(customer_id)
+            if not customer_data.empty:
                 pass
                 # st.write("### Customer Details:")
                 # st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
@@ -66,14 +73,14 @@ if first_name or last_name:
     else:
         st.write("No contacts found with the given name(s).")
 
-if not contact_data.empty:
-    st.header(f" {contact_data.iloc[0]['Contact First Name']} {contact_data.iloc[0]['Contact Last Name']}")
+if not customer_data.empty:
+    st.header(f" {customer_data.iloc[0]['Contact First Name']} {customer_data.iloc[0]['Contact Last Name']}")
 
 # ----------------------------------------------------
 # select Pet
 # ----------------------------------------------------
 
-pet_data = functions.get_pet_details(contact_code)
+pet_data = functions.get_pet_details(customer_id)
 print(pet_data)
 
 if not pet_data.empty:
@@ -87,8 +94,10 @@ if not pet_data.empty:
         # Retrieve the corresponding pet ID for the selected name
         selected_pet_id = pet_data.loc[pet_data['Name'] == selected_pet_name, 'Pet ID'].values[0]
         selected_pet_id = str(selected_pet_id)  # Convert to string
+        st.session_state.selected_pet_id = selected_pet_id
     else:
         selected_pet_id = str(pet_data['Pet ID'].values[0])  # Convert directly to string
+        st.session_state.selected_pet_id = selected_pet_id
 
     # Select pet name based on the string `selected_pet_id`
     selected_pet_name = pet_data.loc[pet_data['Pet ID'].astype(str) == selected_pet_id, 'Name'].values[0]
@@ -96,6 +105,7 @@ if not pet_data.empty:
     # Print and display the selected pet details
     print(selected_pet_name)
     print(selected_pet_id)
+    st.session_state.selected_pet_id = selected_pet_id
     st.write(f"### Key events for {selected_pet_name}")
 
     # ----------------------------------------------------
