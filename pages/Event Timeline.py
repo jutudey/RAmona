@@ -9,6 +9,12 @@ from PIL import Image
 
 app_name = functions.set_page_definitition()
 
+# ----------------------------------------------------
+# defining session states
+# ----------------------------------------------------
+
+
+
 st.title("Event Timeline for Pet")
 
 # ----------------------------------------------------
