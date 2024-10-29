@@ -27,8 +27,8 @@ if 'selected_customer_id' not in st.session_state:
     st.session_state.selected_customer_id = ''
     selected_customer_id = st.session_state.selected_customer_id
 
-st.header('selected_pet_id : ' + st.session_state.selected_pet_id)
-st.header('selected_customer_id : ' + st.session_state.selected_customer_id)
+st.header('selected_pet_id : ' + str(st.session_state.selected_pet_id))
+st.header('selected_customer_id : ' + str(st.session_state.selected_customer_id))
 
 
 # ----------------------------------------------------
@@ -55,23 +55,24 @@ if first_name or last_name:
         selected_contact = st.selectbox('Select a Contact:',
                                         contacts_data["Contact Code"].astype(str) + ' - ' + contacts_data[
                                             "Contact First Name"] + ' ' + contacts_data["Contact Last Name"])
-        selected_contact_code = selected_contact.split(' - ')[0]
-        customer_id = selected_contact_code
-
-        # Display contact details if Contact Code is provided
-        if customer_id:
-            customer_data = functions.get_contact_details(customer_id)
-            if not customer_data.empty:
-                pass
-                # st.write("### Customer Details:")
-                # st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
-                # st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
-                # st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
-            else:
-                st.info("No details found for this Customer ID")
+        st.session_state.selected_contact_code = selected_contact.split(' - ')[0]
+        # customer_id = selected_contact_code
 
     else:
         st.write("No contacts found with the given name(s).")
+
+
+# Display contact details if Contact Code is provided
+if st.session_state.selected_customer_id:
+    customer_data = functions.get_contact_details(st.session_state.selected_customer_id)
+    if not customer_data.empty:
+        st.write("### Customer Details:")
+        st.write(f"Customer ID: {customer_data.iloc[0]['Contact Code']}")
+        st.write(f"First Name: {customer_data.iloc[0]['Contact First Name']}")
+        st.write(f"Last Name: {customer_data.iloc[0]['Contact Last Name']}")
+    else:
+        st.info("No details found for this Customer ID")
+
 
 if not customer_data.empty:
     st.header(f" {customer_data.iloc[0]['Contact First Name']} {customer_data.iloc[0]['Contact Last Name']}")
@@ -80,7 +81,7 @@ if not customer_data.empty:
 # select Pet
 # ----------------------------------------------------
 
-pet_data = functions.get_pet_details(customer_id)
+pet_data = functions.get_pet_details(st.session_state.selected_customer_id)
 print(pet_data)
 
 if not pet_data.empty:
@@ -88,24 +89,40 @@ if not pet_data.empty:
     st.markdown(pet_data.to_markdown(index=False), unsafe_allow_html=True)
 
     if len(pet_data) > 1:
-        # Show only names in the radio button
-        selected_pet_name = st.radio("Select Pet:", pet_data['Name'], horizontal=True)
+        if st.session_state.selected_pet_id:
+            selected_pet_name = pet_data.loc[pet_data['Pet ID'] == st.session_state.selected_pet_id, 'Name'].values[0]
+            reset = st.button(f"{selected_pet_name} is pre-selected. Click here to reset")
+            if reset:
+                st.session_state.selected_pet_id = ""
+                print("value in session state for customer after reset button: " + str(st.session_state.selected_customer_id))
+                print("value in session state for pet after reset button: " + str(st.session_state.selected_pet_id))
+                # Show only names in the radio button
+                selected_pet_name = st.radio("Select Pet:", pet_data['Name'], horizontal=True)
 
-        # Retrieve the corresponding pet ID for the selected name
-        selected_pet_id = pet_data.loc[pet_data['Name'] == selected_pet_name, 'Pet ID'].values[0]
-        selected_pet_id = str(selected_pet_id)  # Convert to string
-        st.session_state.selected_pet_id = selected_pet_id
+                # Retrieve the corresponding pet ID for the selected name
+                st.session_state.selected_pet_id = pet_data.loc[pet_data['Name'] == selected_pet_name, 'Pet ID'].values[0]
+                print("value in session state for customer after reselection: " + str(st.session_state.selected_customer_id))
+                print("value in session state for pet after reselection: " + str(st.session_state.selected_pet_id))
+                print("name of pet after reselection: " + str(selected_pet_name))
+
+
+
+                # selected_pet_id = str(selected_pet_id)  # Convert to string
+                # st.session_state.selected_pet_id = selected_pet_id
+                # Select pet name based on the string `selected_pet_id`
+                # selected_pet_name = pet_data.loc[pet_data['Pet ID'].astype(str) == st.session_state.selected_pet_id, 'Name'].values[0]
+
     else:
-        selected_pet_id = str(pet_data['Pet ID'].values[0])  # Convert directly to string
-        st.session_state.selected_pet_id = selected_pet_id
+        st.session_state.selected_pet_id = str(pet_data['Pet ID'].values[0])  # Convert directly to string
+        # st.session_state.selected_pet_id = selected_pet_id
 
     # Select pet name based on the string `selected_pet_id`
-    selected_pet_name = pet_data.loc[pet_data['Pet ID'].astype(str) == selected_pet_id, 'Name'].values[0]
+    # selected_pet_name = pet_data.loc[pet_data['Pet ID'].astype(str) == st.session_state.selected_pet_id, 'Name'].values[0]
 
     # Print and display the selected pet details
-    print(selected_pet_name)
-    print(selected_pet_id)
-    st.session_state.selected_pet_id = selected_pet_id
+    print(st.session_state.selected_pet_id)
+    print(st.session_state.selected_pet_id)
+    # st.session_state.selected_pet_id = selected_pet_id
     st.write(f"### Key events for {selected_pet_name}")
 
     # ----------------------------------------------------
@@ -116,7 +133,7 @@ if not pet_data.empty:
 
 
     # filter by pet ID
-    filt = (tl["tl_PetID"] == selected_pet_id)
+    filt = (tl["tl_PetID"] == str(st.session_state.selected_pet_id))
     tl_for_pet = tl[filt]
 
     # ----------------------------------------------------

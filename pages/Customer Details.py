@@ -56,21 +56,21 @@ if first_name or last_name:
         st.session_state.selected_customer_id = selected_contact.split(' - ')[0]
         # customer_id = selected_customer_id
         # st.session_state.selected_customer_id = selected_customer_id
-
-
-        # Display contact details if Contact Code is provided
-        if st.session_state.selected_customer_id:
-            contact_data = functions.get_contact_details(st.session_state.selected_customer_id)
-            if not contact_data.empty:
-                st.write("### Customer Details:")
-                st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
-                st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
-                st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
-            else:
-                st.info("No details found for this Customer ID")
-
     else:
         st.write("No contacts found with the given name(s).")
+
+# Display contact details if Contact Code is provided
+if st.session_state.selected_customer_id:
+    contact_data = functions.get_contact_details(st.session_state.selected_customer_id)
+    if not contact_data.empty:
+        st.write("### Customer Details:")
+        st.write(f"Customer ID: {contact_data.iloc[0]['Contact Code']}")
+        st.write(f"First Name: {contact_data.iloc[0]['Contact First Name']}")
+        st.write(f"Last Name: {contact_data.iloc[0]['Contact Last Name']}")
+    else:
+        st.info("No details found for this Customer ID")
+
+
 
 
 
