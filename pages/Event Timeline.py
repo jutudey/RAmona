@@ -102,8 +102,7 @@ if not pet_data.empty:
     # Prepare data for Client Timeline
     # ----------------------------------------------------
 
-
-
+    tl = st.session_state.tl
 
 
     # filter by pet ID
