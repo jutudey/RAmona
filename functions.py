@@ -137,6 +137,8 @@ def get_date_range(selected_option, custom_start=None, custom_end=None):
         else:
             raise ValueError("Custom start and end dates must be provided for 'Custom Range'")
 
+
+
     return start_date, end_date
 
 def get_contacts_by_name(first_name, last_name):

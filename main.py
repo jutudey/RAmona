@@ -6,6 +6,10 @@ from datetime import datetime
 
 app_name = functions.set_page_definitition()
 
+if 'tl' not in st.session_state:
+    st.session_state.tl = ""
+
+st.session_state.tl = functions.build_tl()
 
 # Function to query the database
 def get_PAYGinvoiceLines():

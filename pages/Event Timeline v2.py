@@ -161,7 +161,7 @@ if not pet_data.empty:
 
             # Define a color map for each event type
             event_types = tl_for_pet['tl_Event'].unique()
-            colors = plt.cm.get_cmap('tab10', len(event_types))  # Get a colormap with enough colors for each unique event type
+            colors = plt.get_cmap('tab10', len(event_types))  # Get a colormap with enough colors for each unique event type
             event_color_map = {event: colors(i) for i, event in enumerate(event_types)}
 
             # Plot the events on a horizontal line with markers
