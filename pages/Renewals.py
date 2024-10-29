@@ -21,7 +21,7 @@ initial_registration.loc[initial_registration["tl_Date"] < pd.Timestamp("2023-12
     "2023-12-04")
 
 # Display the updated DataFrame
-st.dataframe(initial_registration)
+# st.dataframe(initial_registration)
 
 # Convert `tl_Date` to datetime if it isn't already
 initial_registration["tl_Date"] = pd.to_datetime(initial_registration["tl_Date"])
@@ -107,11 +107,29 @@ selected_points = plotly_events(fig, click_event=True, select_event=False)
 # Show pet details for the selected day
 # ----------------------------------------------------
 
+# # If a bar is clicked, show the selected date and detailed registrations
+# if selected_points:
+#     selected_day = filtered_grouped_by_day.iloc[selected_points[0]["pointIndex"]]["tl_Date"]
+#     st.header(f"Selected Date: {selected_day}")
+#     filtered_data = initial_registration[initial_registration["tl_Date"] == selected_day]
+#     st.write(f"Registrations for {selected_day}:")
+#     # Create a table with customer name, pet name, and pet id
+#     st.dataframe(filtered_data[["tl_CustomerName", "tl_PetName", "tl_PetID"]])
+
+
 # If a bar is clicked, show the selected date and detailed registrations
 if selected_points:
     selected_day = filtered_grouped_by_day.iloc[selected_points[0]["pointIndex"]]["tl_Date"]
     st.header(f"Selected Date: {selected_day}")
     filtered_data = initial_registration[initial_registration["tl_Date"] == selected_day]
     st.write(f"Registrations for {selected_day}:")
-    # Create a table with customer name, pet name, and pet id
-    st.dataframe(filtered_data[["tl_CustomerName", "tl_PetName", "tl_PetID"]])
+
+    # Create a clickable link for each Pet ID
+    def create_pet_id_link(pet_id):
+        return f'<a href="/Event_Timeline?selected_pet_id={pet_id}" target="_self">{pet_id}</a>'
+
+    # Add clickable links to the DataFrame
+    filtered_data["tl_PetID_Link"] = filtered_data["tl_PetID"].apply(create_pet_id_link)
+
+    # Display the DataFrame with clickable Pet IDs
+    st.write(filtered_data.to_html(columns=["tl_CustomerName", "tl_PetName", "tl_PetID_Link"], escape=False), unsafe_allow_html=True)

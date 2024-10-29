@@ -9,6 +9,8 @@ from PIL import Image
 
 app_name = functions.set_page_definitition()
 
+# st.header('selected_pet_id : ' + selected_pet_id)
+
 # ----------------------------------------------------
 # defining session states
 # ----------------------------------------------------
