@@ -494,10 +494,10 @@ def load_xero_PAYGrec_report(file_path):
 def load_xero_AR_report(file_path):
     df = pd.read_excel(file_path, skiprows=7, header=0).drop([0, 1])
     # df.set_index("Invoice Number", inplace=True)
-    df = df[~df['Contact Account Number'].isin(
+    df = df[~df['Invoice Date'].isin(
         ["Total PAYG Client", "Percentage of total", "Total", "PetCare Advanced PAYG"])]
     df = df.dropna(how='any', subset="Invoice Date")
-    df.drop(columns=["Contact Account Number"], inplace=True)
+    # df.drop(columns=["Contact Account Number"], inplace=True)
     df.drop(columns=["Due Date"], inplace=True)
     # Convert a Date column to datetime and format it to 'YYYY-MM-DD'
     df['Invoice Date'] = pd.to_datetime(df['Invoice Date']).dt.strftime('%Y-%m-%d')
