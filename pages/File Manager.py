@@ -22,9 +22,7 @@ with left_column:
         file_name, file_extension = os.path.splitext(uploaded_file.name)
         file_path = os.path.join(data_folder, uploaded_file.name)
         if os.path.exists(file_path):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            new_file_name = f"{file_name}_{timestamp}{file_extension}"
-            file_path = os.path.join(data_folder, new_file_name)
+            os.remove(file_path)
 
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
@@ -45,7 +43,7 @@ with right_column:
 
         # Display files as a DataFrame
         file_df = pd.DataFrame(file_data, columns=["File Name", "Number of Lines", "Upload Date"])
-        st.dataframe(file_df, height=600)
+        st.dataframe(file_df, height=600, use_container_width=True)
     else:
         st.write("No files uploaded yet.")
 
@@ -57,19 +55,6 @@ with left_column:
         if st.button("Delete File"):
             os.remove(os.path.join(data_folder, delete_file))
             st.success(f"File '{delete_file}' deleted successfully!")
-            # Refresh the file list after deletion
-            files = [f for f in os.listdir(data_folder) if f not in ['.DS_Store', '.ipynb_checkpoints'] and not f.endswith('.ipynb')]
-            if files:
-                        file_data = []
-                        for file in files:
-                                    file_path = os.path.join(data_folder, file)
-                                    if os.path.isfile(file_path):
-                                                num_lines = sum(1 for line in open(file_path)) if file.endswith(".csv") else 'N/A'
-                                                upload_time = datetime.fromtimestamp(os.path.getctime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
-                                                file_data.append((file, num_lines, upload_time))
-                        file_df = pd.DataFrame(file_data, columns=["File Name", "Number of Lines", "Upload Date"])
-                        st.dataframe(file_df, height=600)
-            else:
-                        st.write("No files uploaded yet.")
     else:
         st.write("No files available for deletion.")
+
