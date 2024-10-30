@@ -9,7 +9,7 @@ app_name=functions.set_page_definitition()
 PaymentLinks = "data/paymentLinks-2024-10-29.csv"
 XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_AR_Report_for_Ramona.xlsx"
 XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
-eV_animals = "data/Animals-2024-10-23-13-51-41.csv"
+eV_animals = "data/Animals-2024-10-27-13-41-21.csv"
 
 #----------------------------------------------------
 # Import Adyen links - df1
@@ -116,25 +116,30 @@ if selection:
     selected_rows = selection["selection"]["rows"]
     # st.write(selected_rows)
     # Extract the Invoice # from the selected rows
-    selected_invoices = df3.iloc[selected_rows]["Invoice Number"].values
-
+    selected_invoices= df3.iloc[selected_rows]["Invoice Number"].values[0]
+    # st.header(selected_invoices)
     # Print each selected invoice
-    for selected_invoice in selected_invoices:
-        # st.write("Selected Invoice #:", selected_invoice)
-        ar_invoice_id = selected_invoice
-        print('extracted from selection table' + ar_invoice_id)
+    # for selected_invoice in selected_invoices:
+    #     # st.write("Selected Invoice #:", selected_invoice)
+    ar_invoice_id = selected_invoices
+    # st.header('extracted from selection table ' + ar_invoice_id)
 
 
 #----------------------------------------------------
 # Present all info for individual invoice
 #----------------------------------------------------
+
+# st.dataframe(df3)
+df3["Invoice ID"] = df3['Invoice ID'].astype(str)
+df3["Invoice Number"] = df3['Invoice Number'].astype(str)
+
 if selection:
     if ar_invoice_id:
         try:
             # Attempt to retrieve Customer ID from df3
-            ar_customer_id = df3.loc[df3['Invoice ID'] == ar_invoice_id, 'Customer ID'].iloc[0]
+            ar_customer_id = df3.loc[df3["Invoice ID"] == ar_invoice_id, "Customer ID"].values[0]
             print("Customer Id is found " + ar_customer_id)
-        except IndexError:
+        except KeyError:
             # If no match is found, set Customer ID to an empty string
             print("Customer id is NOT found")
             ar_customer_id = ""

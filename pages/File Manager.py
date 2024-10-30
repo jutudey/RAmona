@@ -26,7 +26,7 @@ with left_column:
 
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
-        st.success(f"File '{os.path.basename(file_path)}' uploaded successfully!")
+        st.success(f"File '{os.path.basename(file_path)}' uploaded successfully! Refresh the page to see updated file list.")
 
 # List of Files in the right column
 with right_column:
