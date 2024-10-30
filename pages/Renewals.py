@@ -79,9 +79,13 @@ else:
     # Get the date range based on the selected option
     start_date, end_date = functions.get_date_range(selected_option)
 
+# Store the selected date range in session state
+st.session_state.start_date = start_date
+st.session_state.end_date = end_date
+
 # Convert start_date and end_date to pandas Timestamps
-start_date = pd.to_datetime(start_date)
-end_date = pd.to_datetime(end_date)
+start_date = pd.to_datetime(st.session_state.start_date)
+end_date = pd.to_datetime(st.session_state.end_date)
 
 # Filter the grouped data based on the selected date range
 filtered_grouped_by_day = grouped_by_day[
