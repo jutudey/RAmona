@@ -598,6 +598,41 @@ def extract_tl_Invoices():
     # return the aggregated DataFrame
     return aggregated_invoices
 
+def extract_tl_Payments():
+    filename_prefix = "payment-history-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    # formatting datatypes
+    df["ezyvetPetIDs"] = df["ezyvetPetIDs"].astype(str)
+    df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
+    df["cardDetails_lastFour"] = df["cardDetails_lastFour"].astype(str)
+    df['amount'] = df['amount'].astype(float).round(2) / 100
+    df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
+    df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
+
+    # Grouping and adding sums, and renaming columns in one go
+    df = df.assign(
+        tl_ID=df["veraReference"],
+        tl_Date=df["eventDate"],
+        tl_CustomerID=df["ezyvetContactId"],
+        tl_CustomerName="",
+        tl_PetID=df["ezyvetPetIDs"],
+        tl_PetName="",
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=df["amount"],
+        tl_Event=df["type"]
+    )
+
+    payments = df[[
+        "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
+    ]]
+    # return the aggregated DataFrame
+    return payments
+
 def extract_tl_pet_data_death():
     filename_prefix = "Animals-"
 
@@ -760,12 +795,17 @@ def build_tl():
     tl_change_plan = extract_tl_Cancellations()
     tl_pet_data = extract_tl_pet_data_death()
     tl_initial_registration = extract_tl_pet_data_registration()
+    tl_payments = extract_tl_Payments()
 
     # Concatenate the DataFrames
-    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_data, tl_initial_registration], ignore_index=True)
+    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_data, tl_initial_registration, tl_payments], ignore_index=True)
+
+    merged_df["tl_Date"] = pd.to_datetime(merged_df["tl_Date"])
 
     # Sort the merged DataFrame by the 'date' column
     tl = merged_df.sort_values(by='tl_Date', ascending=True)  # Set ascending=False if you want descending order
+
+
 
     if 'tl' not in st.session_state:
         st.session_state.tl = 'tl'
