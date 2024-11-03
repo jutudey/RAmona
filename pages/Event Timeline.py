@@ -48,6 +48,7 @@ customer_data = pd.DataFrame()  # Initialize contact_data to avoid NameError
 # Search by names
 if first_name or last_name:
     contacts_data = functions.get_contacts_by_name(first_name, last_name)
+    st.sidebar.write(contacts_data)
     if not contacts_data.empty:
         selected_contact = st.selectbox('Select a Contact:',
                                         contacts_data["Contact Code"].astype(str) + ' - ' + contacts_data[

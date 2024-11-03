@@ -141,6 +141,10 @@ def get_date_range(selected_option, custom_start=None, custom_end=None):
 
     return start_date, end_date
 
+#----------------------------------------------------
+# Old SQL functions
+#----------------------------------------------------
+
 def get_contacts_by_name(first_name, last_name):
     conn = sqlite3.connect('ramona_db.db')
     conditions = []
@@ -239,6 +243,7 @@ def get_invoice_name(invoice_number):
     "Last Name", 
     "Animal Name",
     "Invoice Date",
+    "Invoice Line Date: Created"
     "Client Contact Code",
     "Animal Code",
     "Invoice #"
@@ -390,6 +395,62 @@ def load_newest_file(filename_prefix):
 #----------------------------------------------------
 # Load data (ETL)
 #----------------------------------------------------
+
+def load_petcare_plans():
+    filename_prefix = "pet-care-plans-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    df['EvPetId'] = df['EvPetId'].astype(str).fillna('')
+    df['EvPetId'] = df['EvPetId'].astype(str).str.replace('\.0$', '', regex=True).fillna('')
+
+    # Apply prefix based on the length of EvPetId
+    def format_evpetid(id_value):
+        if len(id_value) == 3:
+            return f"100{id_value}"
+        elif len(id_value) == 4:
+            return f"10{id_value}"
+        elif len(id_value) == 2:
+            return f"1000{id_value}"
+        else:
+            return id_value
+
+    df['EvPetId'] = df['EvPetId'].apply(format_evpetid)
+    # formatting datatypes
+    # Replace "v1" with "V1" in all cells of ActualEvWp
+    df['ActualEvWp'] = df['ActualEvWp'].str.replace('v1', 'V1', regex=False)
+
+    # Map specific ProductCode values to their new values
+    df['ProductCode'] = df['ProductCode'].replace({
+        "D1": "D1V1", "D2": "D2V2", "D3": "D3V1",
+        "C1": "C1V1", "C2": "C2V2", "C3": "C3V3"
+    })
+
+    # Specifically change "C3V1 Cat-Senior" to "C3V1-Cat-Senior"
+    df['ActualEvWp'] = df['ActualEvWp'].replace("C3V1 Cat-Senior", "C3V1-Cat-Senior")
+
+    # Extract text before the first hyphen in ActualEvWp
+    df['EvWPcode'] = df['ActualEvWp'].str.split('-').str[0]
+
+    # Apply conditional changes to EvWPcode based on Species
+    df['EvWPcode'] = df.apply(lambda x: "PCAV1-DOG" if x['EvWPcode'] == "PCAV1" and x['Species'] == "Dog" else (
+        "PCAV1-CAT" if x['EvWPcode'] == "PCAV1" else x['EvWPcode']), axis=1)
+
+    # Map specific ProductCode values to their new values
+    df['EvWPcode'] = df['EvWPcode'].replace({
+        "D1": "D1V1", "D2": "D2V2", "D3": "D3V1",
+        "C1": "C1V1", "C2": "C2V2", "C3": "C3V3"
+    })
+
+    # Strip spaces and standardize case before comparing
+    import numpy as np
+
+    # Set VeraEvDiff to True when ProductCode and EvWPcode are the same, and False when they differ
+    df['VeraEvDiff'] = np.where(df['EvWPcode'].isna(), False,
+                                df['EvWPcode'].str.strip().str.upper() == df['ProductCode'].str.strip().str.upper())
+
+    return df
 
 def get_pet_data(file_path):
     df = pd.read_csv(file_path, index_col=0)
@@ -745,6 +806,7 @@ def extract_tl_Cancellations():
     df["Animal Code"] = df["Animal Code"].astype(str).str.split('.').str[0]
     df["Client Contact Code"] = df["Client Contact Code"].astype(str)
     df["Invoice Date"] = pd.to_datetime(df["Invoice Date"], format="%d-%m-%Y")
+    df["Invoice Line Date: Created"] = pd.to_datetime(df["Invoice Line Date: Created"], format="%d-%m-%Y")
 
     # Cleaning the data
     df = df[(df["Type"] != "Header") &
@@ -754,7 +816,7 @@ def extract_tl_Cancellations():
     # Grouping and adding sums, and renaming columns in one go
     df = df.assign(
         tl_ID=df["Invoice #"],
-        tl_Date=df["Invoice Date"],
+        tl_Date=df["Invoice Line Date: Created"],
         tl_CustomerID=df["Client Contact Code"],
         tl_CustomerName=df["First Name"] + " " + df["Last Name"],
         tl_PetID=df["Animal Code"],
