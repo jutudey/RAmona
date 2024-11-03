@@ -1,5 +1,6 @@
 import streamlit as st
 import functions
+import pandas as pd
 
 app_name=functions.set_page_definitition()
 
@@ -204,7 +205,8 @@ if selection:
             ar_pet_id_newish = st.sidebar.text_input("Please enter an ezyVet Pet Id", key='customer_id_input')
 
 
-        pet_data = functions.get_pet_data(eV_animals)
+        # pet_data = functions.get_pet_data(eV_animals)
+        pet_data = pd.read_csv(eV_animals, index_col=0)
 
         # Ensure both 'Animal Code' column and 'ar_pet_id' are of the same type
         pet_data['Animal Code'] = pet_data['Animal Code'].astype(str)

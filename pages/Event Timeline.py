@@ -9,7 +9,7 @@ from PIL import Image
 
 app_name = functions.set_page_definitition()
 
-st.title("Event Timeline for Pet")
+st.title("⏳   Event Timeline for Pet")
 #
 
 # ----------------------------------------------------
@@ -34,7 +34,7 @@ if 'selected_customer_id' not in st.session_state:
 
 st.sidebar.subheader("Search for client")
 
-# Create a text input to search by Contact Code
+# Create a text input to search by EvCustomerID
 customer_id = st.sidebar.text_input('Enter Customer ID:', '')
 
 # Add a search box for First Name
@@ -47,65 +47,78 @@ customer_data = pd.DataFrame()  # Initialize contact_data to avoid NameError
 
 # Search by names
 if first_name or last_name:
-    contacts_data = functions.get_contacts_by_name(first_name, last_name)
+    contacts_data_old = functions.get_contacts_by_name(first_name, last_name)
+    st.sidebar.write(contacts_data_old)
+    contacts_data = functions.get_contacts_by_name_v2(first_name, last_name)
     st.sidebar.write(contacts_data)
+
     if not contacts_data.empty:
         selected_contact = st.selectbox('Select a Contact:',
-                                        contacts_data["Contact Code"].astype(str) + ' - ' + contacts_data[
-                                            "Contact First Name"] + ' ' + contacts_data["Contact Last Name"])
+                                        contacts_data["EvCustomerID"].astype(str) + ' - ' + contacts_data[
+                                            "OwnerFirstName"] + ' ' + contacts_data["OwnerLastName"])
         st.session_state.selected_customer_id = selected_contact.split(' - ')[0]
     else:
         st.write("No contacts found with the given name(s).")
 
-# Display contact details if Contact Code is provided
+# Display contact details if EvCustomerID is provided
 if st.session_state.selected_customer_id:
-    customer_data = functions.get_contact_details(st.session_state.selected_customer_id)
+    customer_data = functions.get_contact_details_v2(st.session_state.selected_customer_id)
     if not customer_data.empty:
         pass
         # st.write("### Customer Details:")
-        # st.write(f"Customer ID: {customer_data.iloc[0]['Contact Code']}")
-        # st.write(f"First Name: {customer_data.iloc[0]['Contact First Name']}")
-        # st.write(f"Last Name: {customer_data.iloc[0]['Contact Last Name']}")
+        # st.write(f"Customer ID: {customer_data.iloc[0]['EvCustomerID']}")
+        # st.write(f"First Name: {customer_data.iloc[0]['OwnerFirstName']}")
+        # st.write(f"Last Name: {customer_data.iloc[0]['OwnerLastName']}")
     else:
         st.info("No details found for this Customer ID")
 
 if not customer_data.empty:
-    st.header(f" {customer_data.iloc[0]['Contact First Name']} {customer_data.iloc[0]['Contact Last Name']}")
+    st.header(f"👤   {customer_data.iloc[0]['OwnerFirstName'].title()} "
+              f"{customer_data.iloc[0]['OwnerLastName'].title()}")
 
 # ----------------------------------------------------
 # select Pet
 # ----------------------------------------------------
 
-pet_data = functions.get_pet_details(st.session_state.selected_customer_id)
+# pet_data = functions.get_pet_details(st.session_state.selected_customer_id)
+pet_data = functions.load_ezyvet_customers(st.session_state.selected_customer_id)
 
 if not pet_data.empty:
     st.write("### Pet Details:")
-    st.markdown(pet_data.to_markdown(index=False), unsafe_allow_html=True)
+    pet_data_display = pet_data[['Animal Code', 'Animal Name','Animal Record Created At']]
+    st.markdown(pet_data_display.to_markdown(index=False), unsafe_allow_html=True)
 
     # If there are multiple pets, allow the user to select one
     if len(pet_data) > 1:
         selected_pet_name = st.radio(
             "Select Pet:",
-            pet_data['Name'],
-            index=pet_data['Name'].tolist().index(
-                pet_data.loc[pet_data['Pet ID'] == st.session_state.selected_pet_id, 'Name'].values[0]
-            ) if st.session_state.selected_pet_id in pet_data['Pet ID'].values else 0,
+            pet_data['Animal Name'],
+            index=pet_data_display['Animal Name'].tolist().index(
+                pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Animal Name'].values[0]
+            ) if st.session_state.selected_pet_id in pet_data['Animal Code'].values else 0,
             horizontal=True
         )
-    else:
-        selected_pet_name = pet_data.loc[0, 'Name']
 
-    st.session_state.selected_pet_id = pet_data.loc[pet_data['Name'] == selected_pet_name, 'Pet ID'].values[0]
+    else:
+        selected_pet_name = pet_data_display['Animal Name'].iloc[0]
+
+    st.session_state.selected_pet_id = pet_data.loc[pet_data['Animal Name'] == selected_pet_name, 'Animal Code'].values[0]
 
 
     ############################################################
     # Display the selected pet details
     ############################################################
 
-    if str(st.session_state.selected_pet_id) in str(pet_data['Pet ID']):
-        selected_pet_name = pet_data.loc[pet_data['Pet ID'] == st.session_state.selected_pet_id, 'Name'].values[0]
+    if str(st.session_state.selected_pet_id) in str(pet_data['Animal Code']):
+        selected_pet_name = pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Animal Name'].values[0]
+        selected_pet_species = pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Species'].values[0]
 
-        st.write(f"### Key events for {selected_pet_name}")
+        if selected_pet_species == "Canine":
+            st.write(f"### 🐕  {selected_pet_name} - Key Events")
+        elif selected_pet_species == "Feline":
+            st.write(f"### 🐈  {selected_pet_name} - Key Events")
+        else:
+            st.write(f"### 🐁  {selected_pet_name} - Key Events")
 
         # Prepare data for Client Timeline
         tl = st.session_state.tl

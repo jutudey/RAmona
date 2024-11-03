@@ -165,6 +165,29 @@ def get_contacts_by_name(first_name, last_name):
     conn.close()
     return df
 
+def get_contacts_by_name_v2(first_name=None, last_name=None):
+    # Load the DataFrame from session state
+    df = st.session_state.get('ss_petcare_plans')
+
+    # If df is not in session state, generate it
+    if df is None:
+        df = load_petcare_plans()
+
+    # Apply filter for first name if provided
+    if first_name:
+        df = df[df['OwnerFirstName'].str.contains(first_name, case=False, na=False)]
+
+    # Apply filter for last name if provided
+    if last_name:
+        df = df[df['OwnerLastName'].str.contains(last_name, case=False, na=False)]
+
+    # Select relevant columns and remove duplicates based on EvCustomerID
+    filtered_df = df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName']].drop_duplicates(subset='EvCustomerID')
+
+    return filtered_df
+
+
+
 def get_contact_details(contact_code):
     conn = sqlite3.connect('ramona_db.db')
     query = f'''
@@ -178,6 +201,24 @@ def get_contact_details(contact_code):
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
+
+def get_contact_details_v2(customer_id):
+    # Load the DataFrame from session state
+    df = st.session_state.get('ss_petcare_plans')
+
+    # if df is not in sessions state, generate it
+    if df is None:
+        df = load_petcare_plans()
+
+    # Start with the main dataframe and apply filters based on provided names
+    filtered_df = df
+
+    # Apply filter for first name if provided
+
+    filtered_df = filtered_df[filtered_df['EvCustomerID'] == customer_id]
+
+    # Select relevant columns
+    return filtered_df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName']]
 
 def get_pet_details(contact_code):
     conn = sqlite3.connect('ramona_db.db')
@@ -195,9 +236,25 @@ def get_pet_details(contact_code):
     conn.close()
     return df
 
-    # Function to get contact details by First Name and Last Name
+def get_contact_details_v2(customer_id):
+    # Load the DataFrame from session state
+    df = st.session_state.get('ss_petcare_plans')
 
-# Case Details Functions
+    # if df is not in sessions state, generate it
+    if df is None:
+        df = load_petcare_plans()
+
+    # Start with the main dataframe and apply filters based on provided names
+    filtered_df = df
+
+    # Apply filter for first name if provided
+
+    filtered_df = filtered_df[filtered_df['EvCustomerID'] == customer_id]
+
+    # Select relevant columns
+    return filtered_df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName']]
+
+
 
 def get_PaymentLinkDetails(customer_id, pet_id):
     conn = sqlite3.connect('ramona_db.db')
@@ -450,7 +507,36 @@ def load_petcare_plans():
     df['VeraEvDiff'] = np.where(df['EvWPcode'].isna(), False,
                                 df['EvWPcode'].str.strip().str.upper() == df['ProductCode'].str.strip().str.upper())
 
+
+    # Load ezyvet data to extract the customer id which is missing the Vera extract
+    df2 = load_ezyvet_customers()
+
+    df2['Animal Code'] = df2['Animal Code'].astype(str)
+    df2['Owner Contact Code'] = df2['Owner Contact Code'].astype(str)
+
+    # Assuming df2 contains 'Animal Code' and 'Owner Contact Code' columns
+    df = df.merge(df2[['Animal Code', 'Owner Contact Code']], how='left', left_on='EvPetId', right_on='Animal Code')
+
+    # Rename the merged 'Owner Contact Code' to 'EvCustomerID' and drop 'Animal Code' from the merged dataframe
+    df = df.rename(columns={'Owner Contact Code': 'EvCustomerID'}).drop(columns=['Animal Code'])
+
+    # Push the filtered DataFrame to session state
+    st.session_state['ss_petcare_plans'] = df
+
     return df
+
+def load_ezyvet_customers(customer_id=None):
+    filename_prefix = "Animals Report-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    if customer_id == None:
+        return df
+    else:
+        filt = (df['Owner Contact Code'] == customer_id)
+        df = df[filt]
+        return df
 
 def get_pet_data(file_path):
     df = pd.read_csv(file_path, index_col=0)
@@ -695,7 +781,7 @@ def extract_tl_Payments():
     return payments
 
 def extract_tl_pet_data_death():
-    filename_prefix = "Animals-"
+    filename_prefix = "Animals Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)
@@ -742,7 +828,7 @@ def extract_tl_pet_data_death():
     return dead_pets
 
 def extract_tl_pet_data_registration():
-    filename_prefix = "Animals-"
+    filename_prefix = "Animals Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)
