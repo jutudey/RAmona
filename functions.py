@@ -745,40 +745,7 @@ def extract_tl_Invoices():
     # return the aggregated DataFrame
     return aggregated_invoices
 
-def extract_tl_Payments():
-    filename_prefix = "payment-history-"
-
-    # load data into df
-    df = load_newest_file(filename_prefix)
-
-    # formatting datatypes
-    df["ezyvetPetIDs"] = df["ezyvetPetIDs"].astype(str)
-    df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
-    df["cardDetails_lastFour"] = df["cardDetails_lastFour"].astype(str)
-    df['amount'] = df['amount'].astype(float).round(2) / 100
-    df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
-    df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
-
-    # Grouping and adding sums, and renaming columns in one go
-    df = df.assign(
-        tl_ID=df["veraReference"],
-        tl_Date=df["eventDate"],
-        tl_CustomerID=df["ezyvetContactId"],
-        tl_CustomerName="",
-        tl_PetID=df["ezyvetPetIDs"],
-        tl_PetName="",
-        tl_Cost=0,
-        tl_Discount=0,
-        tl_Revenue=df["amount"],
-        tl_Event=df["type"]
-    )
-
-    payments = df[[
-        "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
-        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
-    ]]
-    # return the aggregated DataFrame
-    return paymentsdef extract_tl_Payments():
+def extract_tl_Payments_OLD():
     filename_prefix = "payment-history-"
 
     # load data into df
@@ -813,7 +780,7 @@ def extract_tl_Payments():
     # return the aggregated DataFrame
     return payments
 
-def extract_tl_Payments_v2():
+def extract_tl_Payments():
     filename_prefix = "payment-history-"
 
     # load data into df
@@ -827,9 +794,52 @@ def extract_tl_Payments_v2():
     df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
     df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
 
+    st.header('pre-split DF')
+    st.dataframe(df)
+
+    # splitting multipet payments
+    # Add new column 'PetsInSubscription' with the number of pet IDs in 'ezyvetPetIDs'
+    df['PetsInSubscription'] = df['ezyvetPetIDs'].apply(lambda x: x.count(',') + 1)
+
+    # Split rows with multiple pet IDs into separate rows
+    df['ezyvetPetIDs'] = df['ezyvetPetIDs'].str.split(',')
+    df = df.explode('ezyvetPetIDs')
+
+    st.header('post-split DF')
+    st.dataframe(df)
+
     # Identifying number of failed payments in a row
 
+    # Create a subset where status is 'Refused'
+    df_refused = df[df['status'] == 'Refused']
 
+    # Sort df_refused by 'ezyvetPetIDs' and 'eventDate'
+    df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
+
+    # Add new column 'MissedPayments' with the sequence number for each 'ezyvetPetIDs'
+    def assign_sequence(df):
+        sequence = []
+        current_seq = 1
+        for i in range(len(df)):
+            if i == 0:
+                sequence.append(current_seq)
+            else:
+                if df['ezyvetPetIDs'][i] == df['ezyvetPetIDs'][i - 1] and pd.to_datetime(
+                        df['eventDate'][i]) == pd.to_datetime(df['eventDate'][i - 1]) + pd.Timedelta(days=1):
+                    current_seq += 1
+                else:
+                    current_seq = 1
+                sequence.append(current_seq)
+        return sequence
+
+    df_refused['MissedPayments'] = assign_sequence(df_refused)
+
+    # Update 'type' column based on 'MissedPayments'
+    df_refused['type'] = df_refused['MissedPayments'].apply(lambda
+                                                                x: 'SUSPENDED ACCOUNT' if x >= 8 else f'Missed Payment {x} - £{df_refused.amount.iloc[x - 1]}' if 1 <= x < 8 else None)
+
+    st.header('refused with sequence number')
+    st.dataframe(df_refused)
 
     # Grouping and adding sums, and renaming columns in one go
     df = df.assign(
@@ -842,13 +852,18 @@ def extract_tl_Payments_v2():
         tl_Cost=0,
         tl_Discount=0,
         tl_Revenue=df["amount"],
-        tl_Event=df["type"]
+        tl_Event=df["type"],
+        tl_Comment=""
     )
 
     payments = df[[
         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
-        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event","tl_Comment"
     ]]
+
+    st.header('output DF')
+    st.dataframe(payments)
+
     # return the aggregated DataFrame
     return payments
 
