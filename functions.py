@@ -778,7 +778,81 @@ def extract_tl_Payments():
         "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
     ]]
     # return the aggregated DataFrame
+    return paymentsdef extract_tl_Payments():
+    filename_prefix = "payment-history-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    # formatting datatypes
+    df["ezyvetPetIDs"] = df["ezyvetPetIDs"].astype(str)
+    df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
+    df["cardDetails_lastFour"] = df["cardDetails_lastFour"].astype(str)
+    df['amount'] = df['amount'].astype(float).round(2) / 100
+    df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
+    df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
+
+    # Grouping and adding sums, and renaming columns in one go
+    df = df.assign(
+        tl_ID=df["veraReference"],
+        tl_Date=df["eventDate"],
+        tl_CustomerID=df["ezyvetContactId"],
+        tl_CustomerName="",
+        tl_PetID=df["ezyvetPetIDs"],
+        tl_PetName="",
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=df["amount"],
+        tl_Event=df["type"]
+    )
+
+    payments = df[[
+        "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
+    ]]
+    # return the aggregated DataFrame
     return payments
+
+def extract_tl_Payments_v2():
+    filename_prefix = "payment-history-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    # formatting datatypes
+    df["ezyvetPetIDs"] = df["ezyvetPetIDs"].astype(str)
+    df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
+    df["cardDetails_lastFour"] = df["cardDetails_lastFour"].astype(str)
+    df['amount'] = df['amount'].astype(float).round(2) / 100
+    df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
+    df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
+
+    # Identifying number of failed payments in a row
+
+
+
+    # Grouping and adding sums, and renaming columns in one go
+    df = df.assign(
+        tl_ID=df["veraReference"],
+        tl_Date=df["eventDate"],
+        tl_CustomerID=df["ezyvetContactId"],
+        tl_CustomerName="",
+        tl_PetID=df["ezyvetPetIDs"],
+        tl_PetName="",
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=df["amount"],
+        tl_Event=df["type"]
+    )
+
+    payments = df[[
+        "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
+    ]]
+    # return the aggregated DataFrame
+    return payments
+
+
 
 def extract_tl_pet_data_death():
     filename_prefix = "Animals Report-"
