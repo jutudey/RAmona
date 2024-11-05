@@ -713,13 +713,14 @@ def extract_tl_Invoices():
         tl_Cost=df.groupby("Invoice #")["Product Cost"].transform('sum').round(2),
         tl_Discount=df.groupby("Invoice #")["Discount(\u00a3)"].transform('sum').round(2),
         tl_Revenue=df.groupby("Invoice #")["Total Invoiced (incl)"].transform('sum').round(2),
-        tl_Event="ezyVet Invoice"
+        tl_Event="ezyVet Invoice",
+        tl_Comment="Invoice number: " + df["Invoice #"]
     )
 
     # Reducing the DataFrame and grouping by "tl_ID"
     aggregated_invoices = df[[
         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
-        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event"
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event", "tl_Comment"
     ]].groupby("tl_ID", as_index=False).agg({
         "tl_Date": "max",  # Latest date per group
         "tl_CustomerID": "first",  # Customer ID remains consistent within each invoice
@@ -729,7 +730,8 @@ def extract_tl_Invoices():
         "tl_Cost": "first",  # Sum of costs for each invoice
         "tl_Discount": "first",  # Sum of discounts for each invoice
         "tl_Revenue": "first",  # Sum of revenues for each invoice
-        "tl_Event": "first"  # Event remains consistent within each invoice
+        "tl_Event": "first",  # Event remains consistent within each invoice
+        "tl_Comment": "first"
     })
 
     # Update tl_Discount if tl_Revenue is less than tl_Cost
@@ -882,8 +884,9 @@ def extract_tl_Payments():
         tl_Comment=(
                 df['xeroReference'].fillna('') + " " +
                 df['paymentLinkId'].fillna('') + " " +
-                df['remark'])
+                df['remark'].fillna(''))
         )
+
 
     payments = df[[
         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
@@ -1067,10 +1070,11 @@ def build_tl():
     merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_data, tl_initial_registration, tl_payments], ignore_index=True)
 
     merged_df["tl_Date"] = pd.to_datetime(merged_df["tl_Date"])
+    # merged_df["tl_Cost"] = merged_df["tl_Cost"].apply(lambda x: f"{x:,.2f}")
+    # merged_df["tl_Revenue"] = merged_df["tl_Revenue"].apply(lambda x: f"{x:,.2f}")
 
     # Sort the merged DataFrame by the 'date' column
     tl = merged_df.sort_values(by='tl_Date', ascending=True)  # Set ascending=False if you want descending order
-
 
 
 

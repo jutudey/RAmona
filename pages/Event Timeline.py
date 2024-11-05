@@ -125,6 +125,8 @@ if not pet_data.empty:
         # st.dataframe(tl)
         filt = (tl["tl_PetID"] == str(st.session_state.selected_pet_id))
         tl_for_pet = tl[filt]
+        # Replace any NaN with an empty string in tl_Comment
+        tl_for_pet['tl_Comment'] = tl_for_pet['tl_Comment'].fillna('')
         st.dataframe(tl_for_pet)
 
         # Show events for the selected pet in a table
@@ -145,11 +147,12 @@ if not pet_data.empty:
             # Calculate sum of Revenue and Cost
             total_revenue = tl_table["Revenue"].sum()
             total_cost = tl_table["Internal Cost"].sum()
+            total_pnl = round(total_revenue - total_cost, 2)
 
             # Determine P&L line values
             pnl_description = "**P&L for this pet**"
-            pnl_revenue = total_revenue if total_revenue > total_cost else 0
-            pnl_cost = total_cost if total_cost > total_revenue else 0
+            pnl_revenue = total_pnl if total_revenue > total_cost else 0
+            pnl_cost = total_pnl if total_cost > total_revenue else 0
 
             # Create a DataFrame for the summary line
             summary_df = pd.DataFrame([{
