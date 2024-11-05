@@ -794,8 +794,8 @@ def extract_tl_Payments():
     df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
     df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
 
-    st.header('pre-split DF')
-    st.dataframe(df)
+    # st.header('pre-split DF')
+    # st.dataframe(df)
 
     # splitting multipet payments
     # Add new column 'PetsInSubscription' with the number of pet IDs in 'ezyvetPetIDs'
@@ -805,8 +805,8 @@ def extract_tl_Payments():
     df['ezyvetPetIDs'] = df['ezyvetPetIDs'].str.split(',')
     df = df.explode('ezyvetPetIDs')
 
-    st.header('post-split DF')
-    st.dataframe(df)
+    # st.header('post-split DF')
+    # st.dataframe(df)
 
     # Identifying number of failed payments in a row
 
@@ -832,14 +832,31 @@ def extract_tl_Payments():
                 sequence.append(current_seq)
         return sequence
 
+    # Sort the dataframe by 'ezyvetPetIDs' and 'eventDate'
+    df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
+
     df_refused['MissedPayments'] = assign_sequence(df_refused)
+
+    # st.title("Sorted payments with label")
+    # st.dataframe(df_refused)
 
     # Update 'type' column based on 'MissedPayments'
     df_refused['type'] = df_refused['MissedPayments'].apply(lambda
                                                                 x: 'SUSPENDED ACCOUNT' if x >= 8 else f'Missed Payment {x} - £{df_refused.amount.iloc[x - 1]}' if 1 <= x < 8 else None)
 
+    df_refused['amount'] = 0
+
     st.header('refused with sequence number')
     st.dataframe(df_refused)
+
+    # Update 'type' in the original DataFrame using 'veraReference' to match
+    df.update(df_refused[['veraReference', 'type']])
+    df.update(df_refused[['veraReference', 'amount']])
+
+    st.header('Merged df - are amounts 0')
+    st.dataframe(df)
+
+    df.loc[df['adyenEvent'] == 'REFUND', 'amount'] *= -1
 
     # Grouping and adding sums, and renaming columns in one go
     df = df.assign(
@@ -856,13 +873,15 @@ def extract_tl_Payments():
         tl_Comment=""
     )
 
+
+
     payments = df[[
         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
         "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event","tl_Comment"
     ]]
 
-    st.header('output DF')
-    st.dataframe(payments)
+    # st.header('output DF')
+    # st.dataframe(payments)
 
     # return the aggregated DataFrame
     return payments

@@ -94,6 +94,14 @@ filtered_grouped_by_day = grouped_by_day[
     ]
 
 # ----------------------------------------------------
+# Identify clients for renewals
+# ----------------------------------------------------
+
+st.dataframe(filtered_grouped_by_day)
+
+
+
+# ----------------------------------------------------
 # Create graph
 # ----------------------------------------------------
 
@@ -108,6 +116,10 @@ fig = px.bar(
 
 # Display the Plotly chart with interactivity using PlotlyState
 selected_points = plotly_events(fig, click_event=True, select_event=False)
+
+
+
+
 
 # ----------------------------------------------------
 # Show pet details for the selected day

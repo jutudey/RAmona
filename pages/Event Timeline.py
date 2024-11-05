@@ -122,8 +122,10 @@ if not pet_data.empty:
 
         # Prepare data for Client Timeline
         tl = st.session_state.tl
+        st.dataframe(tl)
         filt = (tl["tl_PetID"] == str(st.session_state.selected_pet_id))
         tl_for_pet = tl[filt]
+        st.dataframe(tl_for_pet)
 
         # Show events for the selected pet in a table
         if not tl_for_pet.empty:
