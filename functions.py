@@ -809,7 +809,6 @@ def extract_tl_Payments():
     # st.dataframe(df)
 
     # Identifying number of failed payments in a row
-
     # Create a subset where status is 'Refused'
     df_refused = df[df['status'] == 'Refused']
 
@@ -840,21 +839,31 @@ def extract_tl_Payments():
     # st.title("Sorted payments with label")
     # st.dataframe(df_refused)
 
-    # Update 'type' column based on 'MissedPayments'
-    df_refused['type'] = df_refused['MissedPayments'].apply(lambda
-                                                                x: 'SUSPENDED ACCOUNT' if x >= 8 else f'Missed Payment {x} - £{df_refused.amount.iloc[x - 1]}' if 1 <= x < 8 else None)
 
+    # Update 'type' column based on 'MissedPayments'
+    df_refused['type'] = df_refused.apply(lambda row: 'SUSPENDED ACCOUNT' if row['MissedPayments'] >= 8 else
+    f"Missed Payment {row['MissedPayments']} - £{row['amount']}" if 1 <= row['MissedPayments'] < 8 else None, axis=1)
     df_refused['amount'] = 0
 
-    st.header('refused with sequence number')
-    st.dataframe(df_refused)
+    # st.header('refused with sequence number')
+    # st.dataframe(df_refused)
 
-    # Update 'type' in the original DataFrame using 'veraReference' to match
-    df.update(df_refused[['veraReference', 'type']])
-    df.update(df_refused[['veraReference', 'amount']])
+    # Drop duplicate 'adyenReference' in df_refused
+    df_refused = df_refused.drop_duplicates(subset='adyenReference')
 
-    st.header('Merged df - are amounts 0')
-    st.dataframe(df)
+    # Merge df with df_refused to update 'type' and 'amount'
+    df = df.merge(df_refused[['adyenReference', 'type', 'amount']], on='adyenReference', how='left',
+                  suffixes=('', '_refused'))
+
+    # Update 'type' and 'amount' only where there are values from df_refused
+    df['type'] = df['type_refused'].combine_first(df['type'])
+    df['amount'] = df['amount_refused'].combine_first(df['amount'])
+
+    # Drop the temporary columns
+    df = df.drop(columns=['type_refused', 'amount_refused'])
+
+    # st.header('Merged df - are amounts 0')
+    # st.dataframe(df)
 
     df.loc[df['adyenEvent'] == 'REFUND', 'amount'] *= -1
 
@@ -872,8 +881,6 @@ def extract_tl_Payments():
         tl_Event=df["type"],
         tl_Comment=""
     )
-
-
 
     payments = df[[
         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
