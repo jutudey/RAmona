@@ -856,6 +856,7 @@ def extract_tl_Payments():
     # Merge df with df_refused to update 'type' and 'amount'
     df = df.merge(df_refused[['adyenReference', 'type', 'amount']], on='adyenReference', how='left',
                   suffixes=('', '_refused'))
+    df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
 
     # Update 'type' and 'amount' only where there are values from df_refused
     df['type'] = df['type_refused'].combine_first(df['type'])
@@ -995,6 +996,53 @@ def extract_tl_pet_data_registration():
     # return the aggregated DataFrame
     return initial_registration
 
+def extract_tl_pet_data_last_visit():
+    filename_prefix = "Animals Report-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    # formatting datatypes
+    df["Animal Record Created At"] = pd.to_datetime(df["Animal Record Created At"], format="%Y-%m-%d %H:%M:%S")
+    df["Last Visit"] = pd.to_datetime(df["Last Visit"], format="%d-%m-%Y")
+    df["Animal Code"] = df["Animal Code"].astype(str).str.split('.').str[0]
+    df["Owner Contact Code"] = df["Owner Contact Code"].astype(str)
+
+    # filtering the data
+    df = df[(df["Owner Contact Code"] != "ezyVet")
+            & (df["Owner First Name"] != "GVAK")
+            & (df["Animal Record Created At"] > "2023-11-17 19:10:22")
+            ]
+
+    # adding new columns
+    df = df.assign(
+        tl_ID=df["Animal Code"],
+        tl_Date=df["Last Visit"],
+        tl_CustomerID=df["Owner Contact Code"],
+        tl_CustomerName=df["Owner First Name"] + " " + df["Owner Last Name"],
+        tl_PetID=df["Animal Code"],
+        tl_PetName=df["Animal Name"],
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=0,
+        tl_Event="Last Visit"
+    )
+
+    # Reducing the DataFrame and grouping by "tl_ID"
+    initial_registration = df[["tl_ID",
+                               "tl_Date",
+                               "tl_CustomerID",
+                               "tl_CustomerName",
+                               "tl_PetID",
+                               "tl_PetName",
+                               "tl_Cost",
+                               "tl_Discount",
+                               "tl_Revenue",
+                               "tl_Event"]]
+
+    # return the aggregated DataFrame
+    return initial_registration
+
 def extract_tl_Cancellations():
 
 # ----------------------------------------------------
@@ -1062,14 +1110,16 @@ def build_tl():
     # import data for TimeLine
     tl_invoices = extract_tl_Invoices()
     tl_change_plan = extract_tl_Cancellations()
-    tl_pet_data = extract_tl_pet_data_death()
+    tl_pet_death = extract_tl_pet_data_death()
     tl_initial_registration = extract_tl_pet_data_registration()
     tl_payments = extract_tl_Payments()
+    lt_last_visit = extract_tl_pet_data_last_visit()
 
     # Concatenate the DataFrames
-    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_data, tl_initial_registration, tl_payments], ignore_index=True)
+    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_death, tl_initial_registration, tl_payments, extract_tl_pet_data_last_visit()], ignore_index=True)
 
     merged_df["tl_Date"] = pd.to_datetime(merged_df["tl_Date"])
+    merged_df["tl_CustomerID"] = merged_df["tl_CustomerID"].astype(str)
     # merged_df["tl_Cost"] = merged_df["tl_Cost"].apply(lambda x: f"{x:,.2f}")
     # merged_df["tl_Revenue"] = merged_df["tl_Revenue"].apply(lambda x: f"{x:,.2f}")
 

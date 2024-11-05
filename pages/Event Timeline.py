@@ -82,10 +82,10 @@ if not customer_data.empty:
 
 # pet_data = functions.get_pet_details(st.session_state.selected_customer_id)
 pet_data = functions.load_ezyvet_customers(st.session_state.selected_customer_id)
-
+st.dataframe(pet_data)
 if not pet_data.empty:
     st.write("### Pet Details:")
-    pet_data_display = pet_data[['Animal Code', 'Animal Name','Animal Record Created At']]
+    pet_data_display = pet_data[['Animal Code', 'Animal Name','Animal Record Created At', 'Has Passed Away', "Active", "Last Visit"]]
     st.markdown(pet_data_display.to_markdown(index=False), unsafe_allow_html=True)
 
     # If there are multiple pets, allow the user to select one
