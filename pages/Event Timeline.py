@@ -82,7 +82,7 @@ if not customer_data.empty:
 
 # pet_data = functions.get_pet_details(st.session_state.selected_customer_id)
 pet_data = functions.load_ezyvet_customers(st.session_state.selected_customer_id)
-st.dataframe(pet_data)
+# st.dataframe(pet_data)
 if not pet_data.empty:
     st.write("### Pet Details:")
     pet_data_display = pet_data[['Animal Code', 'Animal Name','Animal Record Created At', 'Has Passed Away', "Active", "Last Visit"]]
@@ -127,7 +127,7 @@ if not pet_data.empty:
         tl_for_pet = tl[filt]
         # Replace any NaN with an empty string in tl_Comment
         tl_for_pet['tl_Comment'] = tl_for_pet['tl_Comment'].fillna('')
-        st.dataframe(tl_for_pet)
+        # st.dataframe(tl_for_pet)
 
         # Show events for the selected pet in a table
         if not tl_for_pet.empty:

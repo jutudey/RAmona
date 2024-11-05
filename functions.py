@@ -538,6 +538,19 @@ def load_ezyvet_customers(customer_id=None):
         df = df[filt]
         return df
 
+def get_ezyvet_pet_details(pet_id=None):
+    filename_prefix = "Animals Report-"
+
+    # load data into df
+    df = load_newest_file(filename_prefix)
+
+    if pet_id == None:
+        return df
+    else:
+        filt = (df['Animal Code'] == pet_id)
+        df = df[filt]
+        return df
+
 def get_pet_data(file_path):
     df = pd.read_csv(file_path, index_col=0)
     return df
@@ -865,8 +878,8 @@ def extract_tl_Payments():
     # Drop the temporary columns
     df = df.drop(columns=['type_refused', 'amount_refused'])
 
-    st.header('Merged df - are amounts 0')
-    st.dataframe(df)
+    # st.header('Merged df - are amounts 0')
+    # st.dataframe(df)
 
     df.loc[df['adyenEvent'] == 'REFUND', 'amount'] *= -1
 
