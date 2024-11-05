@@ -862,8 +862,8 @@ def extract_tl_Payments():
     # Drop the temporary columns
     df = df.drop(columns=['type_refused', 'amount_refused'])
 
-    # st.header('Merged df - are amounts 0')
-    # st.dataframe(df)
+    st.header('Merged df - are amounts 0')
+    st.dataframe(df)
 
     df.loc[df['adyenEvent'] == 'REFUND', 'amount'] *= -1
 
@@ -879,8 +879,11 @@ def extract_tl_Payments():
         tl_Discount=0,
         tl_Revenue=df["amount"],
         tl_Event=df["type"],
-        tl_Comment=""
-    )
+        tl_Comment=(
+                df['xeroReference'].fillna('') + " " +
+                df['paymentLinkId'].fillna('') + " " +
+                df['remark'])
+        )
 
     payments = df[[
         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
@@ -1070,8 +1073,8 @@ def build_tl():
 
 
 
-    if 'tl' not in st.session_state:
-        st.session_state.tl = 'tl'
+
+    st.session_state.tl = 'tl'
 
     return tl
 

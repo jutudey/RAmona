@@ -122,19 +122,20 @@ if not pet_data.empty:
 
         # Prepare data for Client Timeline
         tl = st.session_state.tl
-        st.dataframe(tl)
+        # st.dataframe(tl)
         filt = (tl["tl_PetID"] == str(st.session_state.selected_pet_id))
         tl_for_pet = tl[filt]
         st.dataframe(tl_for_pet)
 
         # Show events for the selected pet in a table
         if not tl_for_pet.empty:
-            tl_table = tl_for_pet[["tl_Date", "tl_Event", "tl_Cost", "tl_Revenue"]].rename(
+            tl_table = tl_for_pet[["tl_Date", "tl_Event", "tl_Cost", "tl_Revenue", "tl_Comment"]].rename(
                 columns={
                     "tl_Date": "Event Date",
                     "tl_Event": "Event Description",
                     "tl_Cost": "Internal Cost",
-                    "tl_Revenue": "Revenue"
+                    "tl_Revenue": "Revenue",
+                    "tl_Comment": "Remark"
                 }
             )
 
@@ -155,7 +156,8 @@ if not pet_data.empty:
                 "Event Date": "",
                 "Event Description": pnl_description,
                 "Internal Cost": pnl_cost,
-                "Revenue": pnl_revenue
+                "Revenue": pnl_revenue,
+                'Remark': ""
             }])
 
             # Append the summary row to the main table
