@@ -8,8 +8,9 @@ app_name = functions.set_page_definitition()
 
 if 'tl' not in st.session_state:
     st.session_state.tl = ""
+    st.session_state.tl = functions.build_tl()
 
-st.session_state.tl = functions.build_tl()
+
 
 # Function to query the database
 def get_PAYGinvoiceLines():
@@ -43,6 +44,8 @@ def get_PAYGinvoiceLines():
     conn.close()
     return df
 
+# to be replaced by the panda function below
+invoice_lines_from_pandas = functions.get_invoice_lines()
 
 def get_PAYGinvoices():
     conn = sqlite3.connect('ramona_db.db')
@@ -97,7 +100,7 @@ AND i."Product Name" IS Not "Subscription Fee"
 AND i."Product Name" IS Not "Cancellation Fee"
 AND (i."Discount Name" not like "% - all"
 OR i."Discount Name" is NULL)
-AND i."Invoice #" = {invoice_id};
+AND i."Invoice #" = 418905;
     '''
     df = pd.read_sql_query(query, conn)
     conn.close()
@@ -188,6 +191,8 @@ WHERE
     conn.close()
     return df
 
+# to be replaced by pandas function below
+adyenlinks_from_pandas = functions.load_adyen_links()
 
 def get_PaymentLinkDetails(customer_id, pet_id):
     conn = sqlite3.connect('ramona_db.db')
@@ -226,8 +231,8 @@ WHERE
     return df
 
 
-topPage = "Case Details by Invoice No."
-page1 = "PAYG Invoice Lines"
+topPage = "NEW Case Details by Invoice No."
+page1 = "NEW PAYG Invoice Lines"
 page3 = "Adyen Links"
 page4 = "Unpaid PAYG invoices?"
 page5 = "Invoice Status"
@@ -260,18 +265,19 @@ if page == page1:
 
     # Apply filters on the data dynamically
     if invoice_filter:
-        data = data[data['Invoice #'].astype(str).str.contains(invoice_filter)]
+        invoice_lines_from_pandas = invoice_lines_from_pandas[invoice_lines_from_pandas['Invoice #'].astype(str).str.contains(invoice_filter)]
     if client_filter:
-        data = data[data['Client Contact Code'].astype(str).str.contains(client_filter)]
+        invoice_lines_from_pandas = invoice_lines_from_pandas[invoice_lines_from_pandas['Client Contact Code'].astype(str).str.contains(client_filter)]
     if animal_filter:
-        data = data[data['Animal Code'].astype(str).str.contains(animal_filter)]
+        invoice_lines_from_pandas = invoice_lines_from_pandas[invoice_lines_from_pandas['Animal Code'].astype(str).str.contains(animal_filter)]
 
     # Display the filtered results in a scrollable dataframe, remove index column
     st.write("Displaying filtered results:")
-    st.dataframe(data.reset_index(drop=True), height=400)  # Removed index and compact height of 400px
+    st.dataframe(invoice_lines_from_pandas.reset_index(drop=True), height=400)  # Removed index and compact height of 400px
+
 
     # Export filtered data to CSV
-    csv = data.to_csv(index=False).encode('utf-8')
+    csv = invoice_lines_from_pandas.to_csv(index=False).encode('utf-8')
 
     # Create export button
     st.download_button(
@@ -281,49 +287,6 @@ if page == page1:
         mime='text/csv',
     )
 
-
-# Page: PAYG Invoice Lines
-if page == page1:
-    st.title(page1)
-
-    # Run the query automatically on page load
-    data = get_PAYGinvoiceLines()
-
-    # Create 3 columns for the filters
-    col1, col2, col3 = st.columns(3)
-
-    # Add filters in separate columns
-    with col1:
-        invoice_filter = st.text_input('Filter by Invoice #', '')
-
-    with col2:
-        client_filter = st.text_input('Filter by Client Contact Code', '')
-
-    with col3:
-        animal_filter = st.text_input('Filter by Animal Code', '')
-
-    # Apply filters on the data dynamically
-    if invoice_filter:
-        data = data[data['Invoice #'].astype(str).str.contains(invoice_filter)]
-    if client_filter:
-        data = data[data['Client Contact Code'].astype(str).str.contains(client_filter)]
-    if animal_filter:
-        data = data[data['Animal Code'].astype(str).str.contains(animal_filter)]
-
-    # Display the filtered results in a scrollable dataframe, remove index column
-    st.write("Displaying filtered results:")
-    st.dataframe(data.reset_index(drop=True), height=400)  # Removed index and compact height of 400px
-
-    # Export filtered data to CSV
-    csv = data.to_csv(index=False).encode('utf-8')
-
-    # Create export button
-    st.download_button(
-        label="Export filtered data to CSV",
-        data=csv,
-        file_name='filtered_data.csv',
-        mime='text/csv',
-    )
 
 # Case Details by Invoice ID
 elif page == topPage:
@@ -335,10 +298,10 @@ elif page == topPage:
     # Add filters in separate columns
     with col1:
         case_invoice_no = st.text_input('Invoice number', '')
-        # case_invoice_no = 422642 # to force look during development
+
 
     if case_invoice_no:
-        # Fetch the first and last name for the defined Invoice number
+        # OLD Fetch the first and last name for the defined Invoice number
         (first_name,
          last_name,
          pet_name,
@@ -348,45 +311,79 @@ elif page == topPage:
          invoice_no
          ) = get_invoice_name(case_invoice_no)
 
-        # Collect Invoice details
+        # collect invoice data
+        invoice_lines_from_pandas = invoice_lines_from_pandas[(invoice_lines_from_pandas['Invoice #'] == case_invoice_no)]
+        # st.dataframe(invoice_lines_from_pandas)
+        invoice_lines_from_pandas.reset_index(drop=True, inplace=True)
+        _first_name = invoice_lines_from_pandas.loc[0, 'First Name']
+        _last_name = invoice_lines_from_pandas.loc[0, 'Last Name']
+        _pet_name = invoice_lines_from_pandas.loc[0, 'Animal Name']
+        _invoice_date = invoice_lines_from_pandas.loc[0, 'Invoice Date']
+        _customer_id = invoice_lines_from_pandas.loc[0, 'Client Contact Code']
+        _pet_id = invoice_lines_from_pandas.loc[0, 'Animal Code']
+        _invoice_no = invoice_lines_from_pandas.loc[0, 'Invoice #']
+        # OLD Collect Invoice details
         data = get_invoiceDetails(invoice_no)
 
-        if first_name and last_name:
-            st.header(f"{first_name} {last_name} - {pet_name}")
+        if _first_name and _last_name:
+            st.header(f"{_first_name} {_last_name} - {_pet_name}")
 
             with col3:
-                st.markdown(f"**Invoice Date:** {invoice_date}")
-                st.markdown(f"**Customer ID:** {customer_id}")
-                st.markdown(f"**Pet ID:** {pet_id}")
-                st.markdown(f"**Invoice ID:** {invoice_no}")
+                st.markdown(f"**Invoice Date:** {_invoice_date}")
+                st.markdown(f"**Customer ID:** {_customer_id}")
+                st.markdown(f"**Pet ID:** {_pet_id}")
+                st.markdown(f"**Invoice ID:** {_invoice_no}")
 
-            # Set height dynamically based on the number of rows
+            # OLD Set height dynamically based on the number of rows
             num_rows = len(data)
             height = min(40 * num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows
+
+            # NEW Set height dynamically based on the number of rows
+            _num_rows = len(invoice_lines_from_pandas)
+            _height = min(40 * _num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows
 
             # Display the filtered results in a scrollable dataframe, remove index column
             st.markdown("#### Invoice Lines:")
 
-            # st.dataframe(data.reset_index(drop=True), height=height)  # Removed index and compact height of 400px
-            st.markdown(data.to_markdown(index=False), unsafe_allow_html=True)
+            # st.markdown(data.to_markdown(index=False), unsafe_allow_html=True)
 
-            # Collect Payment Links details
+            # NEW
+            invoice_lines_from_pandas.reset_index(drop=True, inplace=True)
+            invoice_lines_from_pandas_display = invoice_lines_from_pandas[['Invoice Line ID', 'Product Name', 'Standard Price(incl)', 'Discount(%)', 'Discount(£)', 'Total Invoiced (incl)', 'Discount Name' ]]
+            st.markdown(invoice_lines_from_pandas_display.to_markdown(index=False), unsafe_allow_html=True)
+
+            # OLD Collect Payment Links details
             data2 = get_PaymentLinkDetails(customer_id, pet_id)
 
-            # Set height dynamically based on the number of rows
+            # Collect Payment Links Detaiils
+            adyenlinks_from_pandas_display = adyenlinks_from_pandas[adyenlinks_from_pandas["Customer ID"] == _customer_id]
+            st.dataframe(adyenlinks_from_pandas_display)
+            adyenlinks_from_pandas_display = adyenlinks_from_pandas_display[['paymentLink', 'Adyen Status', 'merchantReference', 'Invoice ID', 'amount', 'creationDate', 'createdBy', 'shopperEmail', 'Link Type']]
+
+            st.dataframe(adyenlinks_from_pandas_display)
+
+            # OLD Set height dynamically based on the number of rows
             num_rows = len(data)
             height = min(40 * num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows
+
+            # Set height dynamically based on the number of rows
+            _num_rows = len(adyenlinks_from_pandas)
+            _height = min(40 * _num_rows + 50, 400)  # Adjust height: 40px per row, max height 400px for 10 rows
 
             # Display the filtered results in a scrollable dataframe, remove index column
             st.markdown(f"#### Adyen Links associated with this client:""")
 
-            # st.dataframe(data2.reset_index(drop=True), height=height)  # Removed index and compact height of 400px
             data2['Payment Link'] = data2['Payment Link'].apply(lambda x: f'[Link]({x})')
             st.markdown(data2.to_markdown(index=False), unsafe_allow_html=True)
 
+            adyenlinks_from_pandas_display['paymentLink'] = adyenlinks_from_pandas_display['paymentLink'].apply(lambda x: f'[Link]({x})')
+            st.markdown(adyenlinks_from_pandas_display.to_markdown(index=False), unsafe_allow_html=True)
+
+
+
 
         else:
-            st.header("Invoice #422642 not found")
+            st.header("Invoice not found")
 
 
 # page: Adyen links

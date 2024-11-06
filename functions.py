@@ -587,14 +587,18 @@ def get_ezyvet_pet_details(pet_id=None):
         df = df[filt]
         return df
 
+def load_adyen_links(file_path=None):
+    # import data lines
+    invoice_lines_filename_prefix = "paymentLinks-"
 
-def load_adyen_links(file_path):
-  df = pd.read_csv(file_path, index_col=0)
-  df.drop(columns=['description', 'store', 'reusable'], inplace=True)
-  df.rename(columns={"status": "Adyen Status"}, inplace=True)
+    df = load_newest_file(invoice_lines_filename_prefix)
 
-  # identifies VERA Toolbox links as PAYG
-  def set_link_type(row):
+    # df = pd.read_csv(file_path, index_col=0)
+    df.drop(columns=['description', 'store', 'reusable'], inplace=True)
+    df.rename(columns={"status": "Adyen Status"}, inplace=True)
+
+    # identifies VERA Toolbox links as PAYG
+    def set_link_type(row):
       if row['amount'] == "GBP 0.01":
           return 'Card detail change'
       if row['amount'] == "GBP 1.00":
@@ -607,16 +611,16 @@ def load_adyen_links(file_path):
               and re.search(r"[ _-]", row['merchantReference'])):
           return 'PAYG - Vera Toolbox'
 
-      return None
+      # return None
 
-  # Apply the function to create the "Link Type" column
-  df['Link Type'] = df.apply(set_link_type, axis=1)
+    # Apply the function to create the "Link Type" column
+    df['Link Type'] = df.apply(set_link_type, axis=1)
 
-  # Tag Failed Subscriptions payments
-  df['Link Type'] = df['Link Type'].fillna('Failed Subscription')
+    # Tag Failed Subscriptions payments
+    df['Link Type'] = df['Link Type'].fillna('Failed Subscription')
 
-  # Add customer ID and pet ID by extracting all strings of 6 numbers from 'merchantReference'
-  def extract_six_numbers(merchant_reference):
+    # Add customer ID and pet ID by extracting all strings of 6 numbers from 'merchantReference'
+    def extract_six_numbers(merchant_reference):
       matches = re.findall(r'\d{6}', merchant_reference)
       customer_ids = []
       pet_ids = []
@@ -627,16 +631,16 @@ def load_adyen_links(file_path):
               pet_ids.append(match)
       return customer_ids, pet_ids
 
-  df[['Customer ID', 'Pet ID']] = df['merchantReference'].apply(
+    df[['Customer ID', 'Pet ID']] = df['merchantReference'].apply(
       lambda x: pd.Series(extract_six_numbers(x))
-  )
+    )
 
-  # Convert lists to comma-separated strings
-  df['Customer ID'] = df['Customer ID'].apply(lambda x: ', '.join(x) if isinstance(x, list) else None)
-  df['Pet ID'] = df['Pet ID'].apply(lambda x: ', '.join(x) if isinstance(x, list) else None)
+    # Convert lists to comma-separated strings
+    df['Customer ID'] = df['Customer ID'].apply(lambda x: ', '.join(x) if isinstance(x, list) else None)
+    df['Pet ID'] = df['Pet ID'].apply(lambda x: ', '.join(x) if isinstance(x, list) else None)
 
-  # Add invoice number (placeholder for future implementation)
-  def extract_invoice_reference(merchant_reference):
+    # Add invoice number (placeholder for future implementation)
+    def extract_invoice_reference(merchant_reference):
       if re.search(r':.*-.*-', merchant_reference):
           try:
               colon_index = merchant_reference.index(':') + 1
@@ -650,11 +654,11 @@ def load_adyen_links(file_path):
       else:
           return None
 
-  df[['Invoice ID']] = df['merchantReference'].apply(
+    df[['Invoice ID']] = df['merchantReference'].apply(
       lambda x: pd.Series(extract_invoice_reference(x))
-  )
+    )
 
-  return df
+    return df
 
 def extract_six_numbers(merchant_reference):
     matches = re.findall(r'\d{6}', merchant_reference)
@@ -721,6 +725,113 @@ def load_xero_AR_report(file_path):
     # Apply the helper function to the "Reference" column to create the new column
     df['Invoice Reference'] = df['Invoice Reference'].apply(process_reference)
     df = df[df['Total'] != 0.01]
+
+    return df
+
+def get_invoice_lines():
+    # import data lines
+    invoice_lines_filename_prefix = "Invoice Lines-"
+
+    df = load_newest_file(invoice_lines_filename_prefix)
+
+    # Convert 'Invoice Date' from string to datetime format
+    df['Invoice Date'] = pd.to_datetime(df['Invoice Date'], format='%d-%m-%Y')
+    df['Invoice #'] = df['Invoice #'].astype(str)
+    df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id)
+
+    df['Invoice Line Date: Created'] = pd.to_datetime(df['Invoice Line Date: Created'], format='%d-%m-%Y')
+
+    # Data Cleaning
+    df = df[df['Type'] != 'Header']
+    df = df[df['Product Name'] != 'Subscription Fee']
+    df = df[df['Product Name'] != 'Cancellation Fee']
+    df = df[df['Client Contact Code'] != 'ezyVet']
+
+    # Change miscategorised Meloxicam and Methadone away from Consultations
+    df['Product Group'] = df.apply(lambda row: "Medication - Miscategorised " if row[
+                                                                                     'Product Name'] == "(1) Includes: Meloxicam and Methadone" else
+    row['Product Group'], axis=1)
+
+    # Set 'Medication' for medication groups
+    medication_groups = ["Medication - Oral", "Medication - Injectable", "Medication - Flea & Worm",
+                         "Medication - Topical", "Anaesthesia", "Medication - Miscategorised", "Medication - Other"]
+    df['reporting_categories'] = df['Product Group'].apply(lambda x: "Medication" if x in medication_groups else None)
+
+    # Set 'other categories' , without overwriting existing non-null values
+    vaccination_groups = ["Vaccinations", "Vaccine Stock"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Vaccinations" if row['Product Group'] in vaccination_groups else row['reporting_categories'],
+        axis=1)
+    consultations = ["Consultations"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Consultations" if row['Product Group'] in consultations else row['reporting_categories'], axis=1)
+    procedures_groups = ["Procedures", "Dental", "Surgery", "Fluids  Therapy"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Procedures" if row['Product Group'] in procedures_groups else row['reporting_categories'], axis=1)
+    diagnostics_groups = ["Diagnostic Procedures", "Diagnostic Imaging"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Diagnostic" if row['Product Group'] in diagnostics_groups else row['reporting_categories'], axis=1)
+    lab_work_groups = ["Idexx External", "Idexx In-House"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Lab Work" if row['Product Group'] in lab_work_groups else row['reporting_categories'], axis=1)
+    hospitalisation = ["Boarding", "Hospitalisation"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Hospitalisation" if row['Product Group'] in hospitalisation else row['reporting_categories'],
+        axis=1)
+    consumables = ["Consumables", "Surgery Consumables", "Suture Material", "Bandages"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Consumables" if row['Product Group'] in consumables else row['reporting_categories'], axis=1)
+    service_fee = ["Service Fee"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "Service Fee" if row['Product Group'] in service_fee else row['reporting_categories'], axis=1)
+    pts = ["Euthanasia & Cremation", "Individual Cremations"]
+    df['reporting_categories'] = df.apply(
+        lambda row: "PTS & Cremations" if row['Product Group'] in pts else row['reporting_categories'], axis=1)
+    df['reporting_categories'] = df['reporting_categories'].fillna("Misc")
+
+    # Categorise 'Created By'
+    vets = [
+        "Amy Gaines", "Kate Dakin", "Ashton-Rae Nash", "Sarah Halligan",
+        "Hannah Brightmore", "Kaitlin Austin", "James French", "Joshua Findlay", "Andrew Hunt", "Georgia Cleaton",
+        "Alan Robinson", "Sheldon Middleton", "Horatio Marchis", "Claire Hodgson", "Sara Jackson"
+    ]
+    cops = [
+        "System", "Jennifer Hammersley", "Hannah Pointon", "Sheila Rimes",
+        "Victoria Johnson", "Linda Spooner", "Amy Bache", "Katie Goodwin", "Catriona Bagnall", "Francesca James",
+        "Katie Jones", "Emily Freeman", "Esmee Holt", "Charlotte Middleton", "Maz Darley"
+    ]
+    nurses = [
+        "Zoe Van-Leth", "Amy Wood", "Charlotte Crimes", "Emma Foreman",
+        "Charlie Hewitt", "Hannah Brown", "Emily Castle", "Holly Davies", "Liz Hanson",
+        "Emily Smith", "Saffron Marshall", "Charlie Lea-Atkin", "Amber Smith", "Katie Jenkinson",
+        "Nicky Oakden"
+    ]
+
+    df['created_by_category'] = df['Created By'].apply(
+        lambda x: 'Vets' if x in vets else ('COPS' if x in cops else ('Nurses' if x in nurses else 'Other')))
+
+    df.drop(columns=[
+        'Parent Line ID',
+        'Invoice Line Time: Last Modified',
+        'Invoice Line Date: Last Modified',
+        'Last Modified By',
+        'Department ID',
+        'Department',
+        'Inventory Location',
+        'Invoice Line Reference',
+        'Account',
+        'Salesperson is Vet',
+        'User Reason',
+        'Surcharge Adjustment',
+        'Surcharge Name',
+        'Rounding Adjustment',
+        'Rounding Name',
+        'Payment Terms'
+        ], inplace=True)
+
+
+    # Push the filtered DataFrame to session state
+    st.session_state['df'] = df
 
     return df
 
