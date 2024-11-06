@@ -666,7 +666,10 @@ def extract_six_numbers(merchant_reference):
         return ', '.join(matches)
     return None
 
-def load_xero_PAYGrec_report(file_path):
+def load_xero_PAYGrec_report(file_path=None):
+
+    file_path = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
+
     df = pd.read_excel(file_path, skiprows=4, header=0).drop([0, 1])
     df = df[~df['Date'].isin(["Total PetCare Advanced PAYG", "Total PAYG Income", "Total", "PetCare Advanced PAYG"])]
     df = df.dropna(how='all')
@@ -690,7 +693,9 @@ def load_xero_PAYGrec_report(file_path):
 
     return df
 
-def load_xero_AR_report(file_path):
+def load_xero_AR_report(file_path=None):
+
+    file_path = "data/Education___Clinical_Research___Innovation_Group_Limited_-_AR_Report_for_Ramona.xlsx"
     df = pd.read_excel(file_path, skiprows=5, header=0).drop([0, 1])
     # df.set_index("Invoice Number", inplace=True)
     df = df[~df['Invoice Date'].isin(

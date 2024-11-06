@@ -7,9 +7,9 @@ app_name=functions.set_page_definitition()
 #----------------------------------------------------
 # filepaths
 #----------------------------------------------------
-PaymentLinks = "data/paymentLinks-2024-10-29.csv"
-XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_AR_Report_for_Ramona.xlsx"
-XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
+# PaymentLinks = "data/paymentLinks-2024-10-29.csv"
+# XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_AR_Report_for_Ramona.xlsx"
+# XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
 eV_animals = "data/Animals-2024-10-27-13-41-21.csv"
 
 
@@ -18,7 +18,7 @@ eV_animals = "data/Animals-2024-10-27-13-41-21.csv"
 # Import Adyen links - df1
 #----------------------------------------------------
 
-df1 = functions.load_adyen_links(PaymentLinks)
+df1 = functions.load_adyen_links()
 
 # Filter only PAYG links
 df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
@@ -32,7 +32,7 @@ df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 # Import Xero AR data - df3
 #----------------------------------------------------
 
-df3 = functions.load_xero_AR_report(XeroARreport)
+df3 = functions.load_xero_AR_report()
 
 # st.dataframe(df3)
 
@@ -53,7 +53,7 @@ df3 = df3.merge(df1, left_on='Invoice Reference', right_on='id', how='left').set
 
 # st.subheader("All Xero PAYG invoices - df2")
 
-df2 = functions.load_xero_PAYGrec_report(XeroPAYGrecReport)
+df2 = functions.load_xero_PAYGrec_report()
 
 
 
