@@ -7,6 +7,11 @@ import re
 import os
 import datetime
 
+
+#----------------------------------------------------
+# Housekeeping
+#----------------------------------------------------
+
 def set_page_definitition():
     app_name = "RAmona v0.1"
 
@@ -141,6 +146,11 @@ def get_date_range(selected_option, custom_start=None, custom_end=None):
 
     return start_date, end_date
 
+def get_test_pets():
+    # Load CSV
+    df = pd.read_csv('reference_data/test_pets.csv')
+    df["eV_Pet_ID"] = df["eV_Pet_ID"].astype(str)
+    return df
 
 # Function to normalize the ID
 def normalize_id(id_value):
@@ -1265,10 +1275,15 @@ def build_tl():
     merged_df["tl_Revenue"] = merged_df["tl_Revenue"].astype("float64")
     merged_df["tl_Cost"] = merged_df["tl_Cost"].astype("float64")
 
+    test_pets = get_test_pets()
+
+    # Drop rows from merged_df where "tl_PetID" is present in "eV_Pet_ID" of test_pets
+    merged_df = merged_df[~merged_df["tl_PetID"].isin(test_pets["eV_Pet_ID"])]
+
     # Sort the merged DataFrame by the 'date' column
     tl = merged_df.sort_values(by='tl_Date', ascending=True)  # Set ascending=False if you want descending order
 
-    print("hello")
+    print("should be less than 26889")
 
     st.session_state.tl = 'tl'
 

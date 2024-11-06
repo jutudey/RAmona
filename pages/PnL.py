@@ -52,18 +52,23 @@ with ByPet:
         'tl_Profit': 'P&L',
         'tl_Comment': 'Comment'}, inplace=True)
 
+    col1, col2 = st.columns(2)
+    with col1:
 
-    # Show the top 20 entries with the highest P&L
-    st.subheader("📈   Top 20 most profitable pets")
-    top_20_pl = tl_grouped.nlargest(20, 'P&L')
-    st.dataframe(top_20_pl)
+        # Show the top 20 entries with the highest P&L
+        st.subheader("📈   Top 20 most profitable pets")
+        top_20_pl = tl_grouped.nlargest(20, 'P&L')
+        st.dataframe(top_20_pl)
+    with col2:
 
-    # Show the top 20 entries with the lowest P&L
-    st.subheader("📉   Top 20 most expensive pets")
-    top_20_lowest_pl = tl_grouped.nsmallest(20, 'P&L')
-    st.dataframe(top_20_lowest_pl)
+        # Show the top 20 entries with the lowest P&L
+        st.subheader("📉   Top 20 most expensive pets")
+        top_20_lowest_pl = tl_grouped.nsmallest(20, 'P&L')
+        st.dataframe(top_20_lowest_pl)
 
 with ByOwner:
+    col1, col2 = st.columns(2)
+
     # Group by tl_PetID and calculate sums for tl_Revenue and tl_Cost
     tl_grouped = tl.groupby('tl_CustomerID').agg({
         'tl_CustomerName': 'first',
@@ -85,15 +90,17 @@ with ByOwner:
         'tl_Profit': 'P&L',
         'tl_Comment': 'Comment'}, inplace=True)
 
-    # Show the top 20 entries with the highest P&L
-    st.subheader("📈  Top 20 most profitable pets")
-    top_20_pl = tl_grouped.nlargest(20, 'P&L')
-    st.dataframe(top_20_pl)
+    with col1:
+        # Show the top 20 entries with the highest P&L
+        st.subheader("📈  Top 20 most contributing Owners")
+        top_20_pl = tl_grouped.nlargest(20, 'P&L')
+        st.dataframe(top_20_pl)
 
+    with col2:
     # Show the top 20 entries with the lowest P&L
-    st.subheader("📉  Top 20 most expensive pets")
-    top_20_lowest_pl = tl_grouped.nsmallest(20, 'P&L')
-    st.dataframe(top_20_lowest_pl)
+        st.subheader("📉  Top 20 most leaching Owners")
+        top_20_lowest_pl = tl_grouped.nsmallest(20, 'P&L')
+        st.dataframe(top_20_lowest_pl)
 
 # Display grouped tl DataFrame
 st.subheader("P&L for all pets")
