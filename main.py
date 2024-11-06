@@ -1,8 +1,6 @@
 import streamlit as st
-import sqlite3
-import pandas as pd
 import functions
-from datetime import datetime
+
 
 app_name = functions.set_page_definitition()
 
@@ -28,6 +26,11 @@ if 'adyenlinks' not in st.session_state:
     st.session_state.adyenlinks = functions.load_adyen_links()
 
 adyenlinks = st.session_state.adyenlinks
+
+if 'invoice_filter' not in st.session_state:
+    st.session_state.invoice_filter = ""
+
+invoice_filter = st.session_state.invoice_filter
 
 
 # ----------------------------------------------------
@@ -63,11 +66,12 @@ if page == topPage:
 
     # Add filters in separate columns
     with col1:
-        case_invoice_no = st.text_input('Invoice number', '')
+        case_invoice_no = st.text_input('Invoice number', invoice_filter)
 
 
     if case_invoice_no:
 
+        st.session_state.invoice_filter = case_invoice_no
           # collect invoice data
         invoice_lines = invoice_lines[(invoice_lines['Invoice #'] == case_invoice_no)]
         # st.dataframe(invoice_lines_from_pandas)
@@ -136,7 +140,7 @@ elif page == page1:
 
     # Add filters in separate columns
     with col1:
-        invoice_filter = st.text_input('Filter by Invoice #', '')
+        invoice_filter = st.text_input('Filter by Invoice #', invoice_filter)
 
     with col2:
         client_filter = st.text_input('Filter by Client Contact Code', '')
@@ -146,6 +150,7 @@ elif page == page1:
 
     # Apply filters on the data dynamically
     if invoice_filter:
+        st.session_state.invoice_filter = invoice_filter
         invoice_lines = invoice_lines[invoice_lines['Invoice #'].astype(str).str.contains(invoice_filter)]
     if client_filter:
         invoice_lines = invoice_lines[invoice_lines['Client Contact Code'].astype(str).str.contains(client_filter)]
