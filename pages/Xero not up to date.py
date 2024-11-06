@@ -31,7 +31,7 @@ df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 # Import Xero AR data - df3
 #----------------------------------------------------
 
-df3 = functions.load_xero_AR_report()
+df3, ar_date = functions.load_xero_AR_report()
 
 # st.dataframe(df3)
 

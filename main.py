@@ -17,9 +17,9 @@ tl = st.session_state.tl
 
 # Collect Invoice Lines
 if 'invoice_lines' not in st.session_state:
-    st.session_state.invoice_lines = functions.get_invoice_lines()
+    st.session_state.all_invoices = functions.get_invoice_lines()
 
-invoice_lines = st.session_state.invoice_lines
+invoice_lines = st.session_state.all_invoices
 
 # Collect Adyen Links
 if 'adyenlinks' not in st.session_state:

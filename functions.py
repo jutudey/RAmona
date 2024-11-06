@@ -581,8 +581,10 @@ def get_ezyvet_pet_details(pet_id=None):
     df = load_newest_file(filename_prefix)
 
     if pet_id == None:
+        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id)
         return df
     else:
+        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id)
         filt = (df['Animal Code'] == pet_id)
         df = df[filt]
         return df
@@ -694,8 +696,15 @@ def load_xero_PAYGrec_report(file_path=None):
     return df
 
 def load_xero_AR_report(file_path=None):
-
     file_path = "data/Education___Clinical_Research___Innovation_Group_Limited_-_AR_Report_for_Ramona.xlsx"
+
+    # Load the Excel file into a DataFrame
+    df = pd.read_excel(file_path, header=None)
+
+    # Collect the datestamp from the file from Xero
+    ar_date = df.iloc[2, 0]  # A3 is the third row (index 2) and the first column (index 0)
+
+    # Collecting the rest of the data
     df = pd.read_excel(file_path, skiprows=5, header=0).drop([0, 1])
     # df.set_index("Invoice Number", inplace=True)
     df = df[~df['Invoice Date'].isin(
@@ -731,7 +740,7 @@ def load_xero_AR_report(file_path=None):
     df['Invoice Reference'] = df['Invoice Reference'].apply(process_reference)
     df = df[df['Total'] != 0.01]
 
-    return df
+    return df, ar_date
 
 def get_invoice_lines():
     # import data lines
