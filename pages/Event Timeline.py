@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from openpyxl.styles.builtins import total
+
 import functions
 import json
 import matplotlib.pyplot as plt
@@ -123,6 +125,7 @@ if not pet_data.empty:
         # Prepare data for Client Timeline
         tl = st.session_state.tl
         # st.dataframe(tl)
+        # st.write(str(st.session_state.selected_pet_id))
         filt = (tl["tl_PetID"] == str(st.session_state.selected_pet_id))
         tl_for_pet = tl[filt]
         # Replace any NaN with an empty string in tl_Comment
@@ -146,7 +149,9 @@ if not pet_data.empty:
 
             # Calculate sum of Revenue and Cost
             total_revenue = tl_table["Revenue"].sum()
+            # st.write(total_revenue)
             total_cost = tl_table["Internal Cost"].sum()
+            # st.write(total_cost)
             total_pnl = round(total_revenue - total_cost, 2)
 
             # Determine P&L line values

@@ -10,7 +10,7 @@ from PIL import Image
 app_name = functions.set_page_definitition()
 
 st.title("⏳ P&L for Pets and Clients")
-#
+
 
 # ----------------------------------------------------
 # defining session states
@@ -19,31 +19,43 @@ st.title("⏳ P&L for Pets and Clients")
 if 'tl' not in st.session_state:
     st.session_state.tl = functions.build_tl()
 
-if 'selected_pet_id' not in st.session_state:
-    st.session_state.selected_pet_id = ''
-
-if 'selected_customer_id' not in st.session_state:
-    st.session_state.selected_customer_id = ''
 
 tl = st.session_state.tl
-
 st.dataframe(tl)
-# Ensure tl_Revenue and tl_Cost are numeric
+
+# Ensure tl_Revenue, tl_Cost, and tl_PetID are numeric
 tl['tl_Revenue'] = pd.to_numeric(tl['tl_Revenue'], errors='coerce')
 tl['tl_Cost'] = pd.to_numeric(tl['tl_Cost'], errors='coerce')
+tl['tl_PetID'] = pd.to_numeric(tl['tl_PetID'], errors='coerce')
 
-# Group by tl_PetID and calculate total revenue, total cost, and add customer and pet names
-grouped_df = tl.groupby('tl_PetID').agg(
-    total_revenue=('tl_Revenue', 'sum'),
-    total_cost=('tl_Cost', 'sum'),
-    tl_CustomerName=('tl_CustomerName', 'first')
-).reset_index()
+# Load pet details from external function
+pet_details_df = functions.get_ezyvet_pet_details()
 
-# Handle tl_PetName by selecting the first non-empty value
-grouped_df['tl_PetName'] = tl.groupby('tl_PetID')['tl_PetName'].apply(lambda x: x[x != ''].iloc[0] if any(x != '') else '')
+# Ensure Animal Code is numeric
+pet_details_df['Animal Code'] = pd.to_numeric(pet_details_df['Animal Code'], errors='coerce')
 
-# Calculate total P&L for each tl_PetID
-grouped_df['total_pnl'] = grouped_df['total_revenue'] - grouped_df['total_cost']
+# Merge pet details into tl DataFrame
+tl = tl.merge(pet_details_df[['Animal Code', 'Animal Name', 'Owner Contact Code', 'Owner Last Name', 'Owner First Name']],
+              how='left',
+              left_on='tl_PetID',
+              right_on='Animal Code')
 
-st.dataframe(grouped_df)
+# Rename columns to match expected output
+tl.rename(columns={'Animal Name': 'tl_PetName', 'Owner Contact Code': 'tl_CustomerID', 'Owner Last Name': 'tl_CustomerLastName', 'Owner First Name': 'tl_CustomerFirstName'}, inplace=True)
 
+# Group by tl_PetID and calculate sums for tl_Revenue and tl_Cost
+tl_grouped = tl.groupby('tl_PetID').agg({
+  'tl_PetName': 'first',
+  'tl_CustomerID': 'first',
+  'tl_CustomerLastName': 'first',
+  'tl_CustomerFirstName': 'first',
+  'tl_Revenue': 'sum',
+  'tl_Cost': 'sum'
+}).reset_index()
+
+# Add a new column for revenue minus cost
+tl_grouped['tl_Profit'] = tl_grouped['tl_Revenue'] - tl_grouped['tl_Cost']
+
+# Display grouped tl DataFrame
+st.subheader("Grouped tl DataFrame by tl_PetID")
+st.dataframe(tl_grouped)

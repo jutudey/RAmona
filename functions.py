@@ -141,6 +141,32 @@ def get_date_range(selected_option, custom_start=None, custom_end=None):
 
     return start_date, end_date
 
+
+# Function to normalize the ID
+def normalize_id(id_value):
+    if id_value == "nan":
+        return np.nan
+
+    if pd.isna(id_value):
+        return np.nan
+
+    # Convert to string if it's a number
+    id_value = str(id_value)
+
+    # Remove ".0" if it is at the end of the entry
+    if id_value.endswith('.0'):
+        id_value = id_value[:-2]
+
+    # Remove any commas
+    id_value = id_value.replace(',', '')
+
+    # Ensure it's exactly 6 digits
+    if len(id_value) == 6 and id_value.isdigit():
+        return id_value
+    else:
+        raise ValueError(f"Invalid ID format for value: {id_value}")
+
+
 #----------------------------------------------------
 # Old SQL functions
 #----------------------------------------------------
@@ -551,9 +577,6 @@ def get_ezyvet_pet_details(pet_id=None):
         df = df[filt]
         return df
 
-def get_pet_data(file_path):
-    df = pd.read_csv(file_path, index_col=0)
-    return df
 
 def load_adyen_links(file_path):
   df = pd.read_csv(file_path, index_col=0)
@@ -907,6 +930,9 @@ def extract_tl_Payments():
         "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event","tl_Comment"
     ]]
 
+    payments.loc[:, 'tl_CustomerID'] = payments['tl_CustomerID'].apply(normalize_id)
+    payments.loc[:, 'tl_PetID'] = payments['tl_PetID'].apply(normalize_id)
+
     # st.header('output DF')
     # st.dataframe(payments)
 
@@ -1126,24 +1152,27 @@ def build_tl():
     tl_pet_death = extract_tl_pet_data_death()
     tl_initial_registration = extract_tl_pet_data_registration()
     tl_payments = extract_tl_Payments()
-    lt_last_visit = extract_tl_pet_data_last_visit()
+    tl_last_visit = extract_tl_pet_data_last_visit()
 
     # Concatenate the DataFrames
-    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_death, tl_initial_registration, tl_payments, extract_tl_pet_data_last_visit()], ignore_index=True)
+    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_death, tl_initial_registration, tl_payments, tl_last_visit], ignore_index=True)
 
     merged_df["tl_Date"] = pd.to_datetime(merged_df["tl_Date"])
     merged_df["tl_CustomerID"] = merged_df["tl_CustomerID"].astype(str)
-    # merged_df["tl_Cost"] = merged_df["tl_Cost"].apply(lambda x: f"{x:,.2f}")
-    # merged_df["tl_Revenue"] = merged_df["tl_Revenue"].apply(lambda x: f"{x:,.2f}")
+    merged_df["tl_PetID"] = merged_df["tl_PetID"].astype(str)
+    merged_df["tl_Revenue"] = merged_df["tl_Revenue"].astype("float64")
+    merged_df["tl_Cost"] = merged_df["tl_Cost"].astype("float64")
 
     # Sort the merged DataFrame by the 'date' column
     tl = merged_df.sort_values(by='tl_Date', ascending=True)  # Set ascending=False if you want descending order
 
-
+    print("hello")
 
     st.session_state.tl = 'tl'
 
     return tl
+
+
 
 
 
