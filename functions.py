@@ -184,7 +184,7 @@ def initialize_session_state():
 
     # Collect Invoice Lines
     if 'invoice_lines' not in st.session_state:
-        st.session_state.all_invoices = get_invoice_lines()
+        st.session_state.all_invoices = get_ev_invoice_lines()
 
     # Collect Adyen Links
     if 'adyenlinks' not in st.session_state:
@@ -766,7 +766,7 @@ def load_xero_AR_report(file_path=None):
 
     return df, ar_date
 
-def get_invoice_lines():
+def get_ev_invoice_lines(invoice_id=None):
     # import data lines
     invoice_lines_filename_prefix = "Invoice Lines-"
 
@@ -868,6 +868,9 @@ def get_invoice_lines():
         'Payment Terms'
         ], inplace=True)
 
+    if invoice_id:
+        invoices_lines_in_invoice = df[df['Invoice #'] == invoice_id]
+        return invoices_lines_in_invoice
 
     # Push the filtered DataFrame to session state
     st.session_state['df'] = df
@@ -943,6 +946,10 @@ def extract_tl_Invoices(pet_id=None, customer_id=None):
     if pet_id:
         invoices_for_pet = aggregated_invoices[aggregated_invoices["tl_PetID"] == pet_id]
         return invoices_for_pet
+
+    if customer_id:
+        invoices_for_customer = aggregated_invoices[aggregated_invoices["tl_CustomerID"] == customer_id]
+        return invoices_for_customer
 
     # return the aggregated DataFrame
     return aggregated_invoices
