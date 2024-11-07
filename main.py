@@ -1,6 +1,6 @@
 import streamlit as st
 import functions
-from functions import initialize_session_state
+
 
 app_name = functions.set_page_definitition()
 
@@ -11,7 +11,7 @@ app_name = functions.set_page_definitition()
 
 functions.initialize_session_state()
 
-invoice_lines = st.session_state.all_invoices
+invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks
 selected_invoice_no = st.session_state.selected_invoice_no
 

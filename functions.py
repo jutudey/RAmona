@@ -183,8 +183,8 @@ def initialize_session_state():
         st.session_state.tl = build_tl()
 
     # Collect Invoice Lines
-    if 'invoice_lines' not in st.session_state:
-        st.session_state.all_invoices = get_ev_invoice_lines()
+    if 'all_invoice_lines' not in st.session_state:
+        st.session_state.all_invoice_lines = get_ev_invoice_lines()
 
     # Collect Adyen Links
     if 'adyenlinks' not in st.session_state:

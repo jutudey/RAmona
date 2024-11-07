@@ -17,7 +17,7 @@ st.title("⚖️ P&L for Pets and Clients")
 
 functions.initialize_session_state()
 
-invoice_lines = st.session_state.all_invoices
+invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks
 selected_invoice_no = st.session_state.selected_invoice_no
 
