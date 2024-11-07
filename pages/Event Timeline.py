@@ -13,19 +13,17 @@ app_name = functions.set_page_definitition()
 
 st.title("⏳   Event Timeline for Pet")
 #
-
 # ----------------------------------------------------
 # defining session states
 # ----------------------------------------------------
 
-if 'tl' not in st.session_state:
-    st.session_state.tl = functions.build_tl()
+functions.initialize_session_state()
 
-if 'selected_pet_id' not in st.session_state:
-    st.session_state.selected_pet_id = ''
-
-if 'selected_customer_id' not in st.session_state:
-    st.session_state.selected_customer_id = ''
+invoice_lines = st.session_state.all_invoices
+adyenlinks = st.session_state.adyenlinks
+selected_invoice_no = st.session_state.selected_invoice_no
+selected_customer_id = st.session_state.selected_customer_id
+selected_pet_id = st.session_state.selected_pet_id
 
 # st.header('selected_pet_id : ' + str(st.session_state.selected_pet_id))
 # st.header('selected_customer_id : ' + str(st.session_state.selected_customer_id))

@@ -8,6 +8,7 @@ import os
 import datetime
 
 
+
 #----------------------------------------------------
 # Housekeeping
 #----------------------------------------------------
@@ -175,6 +176,29 @@ def normalize_id(id_value):
         return id_value
     else:
         raise ValueError(f"Invalid ID format for value: {id_value}")
+
+def initialize_session_state():
+    # Building Timeline
+    if 'tl' not in st.session_state:
+        st.session_state.tl = build_tl()
+
+    # Collect Invoice Lines
+    if 'invoice_lines' not in st.session_state:
+        st.session_state.all_invoices = get_invoice_lines()
+
+    # Collect Adyen Links
+    if 'adyenlinks' not in st.session_state:
+        st.session_state.adyenlinks = load_adyen_links()
+
+    if 'selected_invoice_no' not in st.session_state:
+        st.session_state.selected_invoice_no = ""
+
+    if 'selected_customer_id' not in st.session_state:
+        st.session_state.selected_customer_id = ""
+
+    if 'selected_pet_id' not in st.session_state:
+        st.session_state.selected_pet_id = ""
+
 
 
 #----------------------------------------------------
@@ -356,7 +380,7 @@ def get_invoice_name(invoice_number):
                 df.iloc[0]['Invoice #']
                 )
     else:
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None, None
 
 def get_invoiceDetails(invoice_id):
     conn = sqlite3.connect('ramona_db.db')
@@ -751,7 +775,8 @@ def get_invoice_lines():
     # Convert 'Invoice Date' from string to datetime format
     df['Invoice Date'] = pd.to_datetime(df['Invoice Date'], format='%d-%m-%Y')
     df['Invoice #'] = df['Invoice #'].astype(str)
-    df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id)
+    df['Animal Code'] = df['Animal Code'].apply(normalize_id)
+    # df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id)
 
     df['Invoice Line Date: Created'] = pd.to_datetime(df['Invoice Line Date: Created'], format='%d-%m-%Y')
 
@@ -854,7 +879,7 @@ def get_invoice_lines():
 # Prepare data for Client Timeline
 #----------------------------------------------------
 
-def extract_tl_Invoices():
+def extract_tl_Invoices(pet_id=None, customer_id=None):
     filename_prefix = "Invoice Lines-"
 
     # load data into df
@@ -914,6 +939,10 @@ def extract_tl_Invoices():
     aggregated_invoices["tl_Cost"] = aggregated_invoices["tl_Cost"].round(2)
     aggregated_invoices["tl_Discount"] = aggregated_invoices["tl_Discount"].round(2)
     aggregated_invoices["tl_Revenue"] = aggregated_invoices["tl_Revenue"].round(2)
+
+    if pet_id:
+        invoices_for_pet = aggregated_invoices[aggregated_invoices["tl_PetID"] == pet_id]
+        return invoices_for_pet
 
     # return the aggregated DataFrame
     return aggregated_invoices
@@ -1414,17 +1443,19 @@ def build_tl():
 
     return tl
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+def rename_tl_columns(df):
+    renamed_df = df.rename(columns={
+        "tl_ID": "ID",
+        "tl_Date": "Event Date",
+        "tl_CustomerID": "Customer ID",
+        "tl_PetID": "Pet ID",
+        "tl_CustomerName": "Customer Name",
+        "tl_PetName": "Pet Name",
+        "tl_Event": "Event Description",
+        "tl_Cost": "Internal Cost",
+        "tl_Revenue": "Revenue",
+        "tl_Comment": "Remark",
+        "tl_Profit": "P&L"
+        }, inplace=True)
+    return renamed_df
 

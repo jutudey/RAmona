@@ -1,6 +1,6 @@
 import streamlit as st
 import functions
-
+from functions import initialize_session_state
 
 app_name = functions.set_page_definitition()
 
@@ -9,29 +9,11 @@ app_name = functions.set_page_definitition()
 # defining session states
 # ----------------------------------------------------
 
-# Building Timeline
-if 'tl' not in st.session_state:
-    st.session_state.tl = functions.build_tl()
-
-tl = st.session_state.tl
-
-# Collect Invoice Lines
-if 'invoice_lines' not in st.session_state:
-    st.session_state.all_invoices = functions.get_invoice_lines()
+functions.initialize_session_state()
 
 invoice_lines = st.session_state.all_invoices
-
-# Collect Adyen Links
-if 'adyenlinks' not in st.session_state:
-    st.session_state.adyenlinks = functions.load_adyen_links()
-
 adyenlinks = st.session_state.adyenlinks
-
-if 'invoice_filter' not in st.session_state:
-    st.session_state.invoice_filter = ""
-
-invoice_filter = st.session_state.invoice_filter
-
+selected_invoice_no = st.session_state.selected_invoice_no
 
 # ----------------------------------------------------
 # Menu Structure
@@ -66,12 +48,12 @@ if page == topPage:
 
     # Add filters in separate columns
     with col1:
-        case_invoice_no = st.text_input('Invoice number', invoice_filter)
+        case_invoice_no = st.text_input('Invoice number', selected_invoice_no)
 
 
     if case_invoice_no:
 
-        st.session_state.invoice_filter = case_invoice_no
+        st.session_state.selected_invoice_no = case_invoice_no
           # collect invoice data
         invoice_lines = invoice_lines[(invoice_lines['Invoice #'] == case_invoice_no)]
         # st.dataframe(invoice_lines_from_pandas)
@@ -140,7 +122,7 @@ elif page == page1:
 
     # Add filters in separate columns
     with col1:
-        invoice_filter = st.text_input('Filter by Invoice #', invoice_filter)
+        selected_invoice_no = st.text_input('Filter by Invoice #', selected_invoice_no)
 
     with col2:
         client_filter = st.text_input('Filter by Client Contact Code', '')
@@ -149,9 +131,9 @@ elif page == page1:
         animal_filter = st.text_input('Filter by Animal Code', '')
 
     # Apply filters on the data dynamically
-    if invoice_filter:
-        st.session_state.invoice_filter = invoice_filter
-        invoice_lines = invoice_lines[invoice_lines['Invoice #'].astype(str).str.contains(invoice_filter)]
+    if selected_invoice_no:
+        st.session_state.selected_invoice_no = selected_invoice_no
+        invoice_lines = invoice_lines[invoice_lines['Invoice #'].astype(str).str.contains(selected_invoice_no)]
     if client_filter:
         invoice_lines = invoice_lines[invoice_lines['Client Contact Code'].astype(str).str.contains(client_filter)]
     if animal_filter:

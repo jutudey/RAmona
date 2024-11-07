@@ -3,100 +3,15 @@ import functions
 
 functions.set_page_definitition()
 
-# def get_PaymentLinkDetails(customer_id, pet_id):
-#     conn = sqlite3.connect('ramona_db.db')
-#     query = f'''
-#     SELECT
-# 	paymentLink as "Payment Link",
-#     status as "Payment Status",
-#     merchantReference as "Merchant Reference",
-#     ROUND(CAST(REPLACE(amount, 'GBP ', '') AS REAL), 2) AS "Amount",
-#     creationDate,
-# 	createdBy,
-#     shopperEmail,
-#
-#     CASE
-#
-#         WHEN merchantReference LIKE '%:%-%-%' THEN
-#             SUBSTR(
-#                 merchantReference,
-#                 INSTR(merchantReference, ':') + 1,
-#                 INSTR(SUBSTR(merchantReference, INSTR(merchantReference, '-') + 1), '-') + INSTR(merchantReference, '-') - INSTR(merchantReference, ':') - 1
-#             )
-#
-#         WHEN merchantReference NOT LIKE '%:%' THEN 'No invoice reference'
-#         ELSE NULL
-#     END AS invoiceReference
-#
-# FROM adyen_PaymentLinks
-# WHERE
-#     amount NOT IN ('GBP 0.01', 'GBP 1.00', 'GBP 0.10')
-#     AND LENGTH("merchantReference") > 24
-#     AND (merchantReference LIKE '%{pet_id}%' OR merchantReference LIKE '%{customer_id}%')
-#
-#         '''
-#     df = pd.read_sql_query(query, conn)
-#     conn.close()
-#     return df
+# ----------------------------------------------------
+# defining session states
+# ----------------------------------------------------
 
+functions.initialize_session_state()
 
-# Function to get First Name and Last Name for a specific Invoice #
-# def get_invoice_name(invoice_number):
-#     conn = sqlite3.connect('ramona_db.db')
-#     query = f'''
-#     SELECT
-#     "First Name",
-#     "Last Name",
-#     "Animal Name",
-#     "Invoice Date",
-#     "Client Contact Code",
-#     "Animal Code",
-#     "Invoice #"
-#     FROM eV_InvoiceLines i
-#     WHERE "Invoice #" = {invoice_number}
-#     '''
-#     df = pd.read_sql_query(query, conn)
-#     conn.close()
-#
-#     if not df.empty:
-#         return (df.iloc[0]['First Name'],
-#                 df.iloc[0]['Last Name'],
-#                 df.iloc[0]['Animal Name'],
-#                 df.iloc[0]['Invoice Date'],
-#                 df.iloc[0]['Client Contact Code'],
-#                 df.iloc[0]['Animal Code'],
-#                 df.iloc[0]['Invoice #']
-#                 )
-#     else:
-#         return None, None, None, None, None, None
-
-
-# Function to get invoice details
-
-# def get_invoiceDetails(invoice_id):
-#     conn = sqlite3.connect('ramona_db.db')
-#     query = f'''
-# SELECT
-# 	i."Invoice Line ID",
-# 	i."Product Name",
-# 	i."Standard Price(incl)",
-# 	i.DiscountPercentage,
-# 	i."DiscountValue",
-# 	i."Total Invoiced (incl)",
-# 	i."Discount Name"
-# FROM
-# eV_InvoiceLines i
-# WHERE
-# i."Type" = 'Item'
-# AND i."Product Name" IS Not "Subscription Fee"
-# AND i."Product Name" IS Not "Cancellation Fee"
-# AND (i."Discount Name" not like "% - all"
-# OR i."Discount Name" is NULL)
-# AND i."Invoice #" = {invoice_id};
-#     '''
-#     df = pd.read_sql_query(query, conn)
-#     conn.close()
-#     return df
+invoice_lines = st.session_state.all_invoices
+adyenlinks = st.session_state.adyenlinks
+selected_invoice_no = st.session_state.selected_invoice_no
 
 
 # Create 3 columns
@@ -104,7 +19,7 @@ col1, col2, col3 = st.columns(3)
 
 # Add filters in separate columns
 with col1:
-    case_invoice_no = st.text_input('Invoice number', '')
+    case_invoice_no = st.text_input('Invoice number', selected_invoice_no)
     # case_invoice_no = 422642 # to force look during development
 
 if case_invoice_no:

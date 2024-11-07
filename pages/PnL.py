@@ -9,15 +9,17 @@ from PIL import Image
 
 app_name = functions.set_page_definitition()
 
-st.title("⏳ P&L for Pets and Clients")
-
+st.title("⚖️ P&L for Pets and Clients")
 
 # ----------------------------------------------------
 # defining session states
 # ----------------------------------------------------
 
-if 'tl' not in st.session_state:
-    st.session_state.tl = functions.build_tl()
+functions.initialize_session_state()
+
+invoice_lines = st.session_state.all_invoices
+adyenlinks = st.session_state.adyenlinks
+selected_invoice_no = st.session_state.selected_invoice_no
 
 tl = st.session_state.tl
 # st.dataframe(tl)
