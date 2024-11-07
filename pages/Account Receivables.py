@@ -110,10 +110,10 @@ with tab1:
         (xero_ar_data['Customer ID'].notna()) &
         (xero_ar_data['Customer ID'].str.strip() != ""))
 
-    xero_ar_data = xero_ar_data[link_still_active]
-    # st.dataframe(xero_ar_data)
+    xero_ar_data_w_customer_id = xero_ar_data[link_still_active]
+    # st.dataframe(xero_ar_data_w_customer_id)
     ar_invoice_id = ()
-    selected_ar_invoice = st.dataframe(xero_ar_data[['Invoice Number', 'Invoice ID', 'Invoice Date',
+    selected_ar_invoice = st.dataframe(xero_ar_data_w_customer_id[['Invoice Number', 'Invoice ID', 'Invoice Date',
                                       '< 1 Month', '1 Month', '2 Months',
                                       '3 Months', 'Older', 'Total', "Adyen Status", "Customer ID", "Pet ID"]],
                                        on_select="rerun", selection_mode="single-row")
@@ -261,6 +261,28 @@ with tab1:
 
         else:
             pass
+
+with tab2:
+
+    link_still_active_no_cust_id = (
+            (xero_ar_data['Adyen Status'] != "completed") &
+            ((xero_ar_data['Customer ID'].isna()) |
+            (xero_ar_data['Customer ID'].str.strip() == "")))
+
+    xero_ar_data_no_customer_id = xero_ar_data[link_still_active_no_cust_id]
+    st.dataframe(xero_ar_data_no_customer_id)
+    # ar_invoice_id = ()
+    selected_ar_invoice = st.dataframe(xero_ar_data_no_customer_id[['Invoice Number', 'Invoice ID', 'Invoice Date',
+                                                     '< 1 Month', '1 Month', '2 Months',
+                                                     '3 Months', 'Older', 'Total', "Adyen Status", "Customer ID",
+                                                     "Pet ID"]],
+                                       on_select="rerun", selection_mode="single-row")
+    # Display the selected row(s)
+    if selected_ar_invoice:
+        # st.write("Selected rows:", selection)
+        # Extract the selected row indices
+        selected_row = selected_ar_invoice["selection"]["rows"]
+        # st.write(selected_row)
 
 
 
