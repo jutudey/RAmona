@@ -1598,3 +1598,22 @@ def rename_tl_columns(df):
         }, inplace=True)
     return renamed_df
 
+
+#----------------------------------------------------
+# UI elements
+#----------------------------------------------------
+
+def enter_manual_tl_event(selected_pet_name):
+    event_date = st.date_input('Enter Event date:')
+    event_cost = st.number_input("Enter Cost:", min_value=0.0, step=1.0, key='event_cost')
+    event_revenue = st.number_input("Enter Cost:", min_value=0.0, step=1.0, key='event_revenue')
+    event_type = st.text_input("Which kind of event")
+    event_comment = st.text_input("Add a comment or additional info")
+    event_creator = st.text_input("Enter your name")
+    # Get the current date stamp
+    date_stamp = datetime.datetime.now().strftime("%Y%m%d")
+    event_signature = '[' + event_creator + ' - ' + date_stamp + ']'
+    st.button('Submit')
+
+
+

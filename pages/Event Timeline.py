@@ -1,9 +1,7 @@
+import datetime
 import streamlit as st
 import pandas as pd
-from openpyxl.styles.builtins import total
-
 import functions
-import json
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -218,11 +216,80 @@ if not pet_data.empty:
 
                 st.pyplot(fig)
 
-        else:
-            st.write("No events found for the selected pet.")
+
+
+
+
+                # ----------------------------------------------------
+                # Manually add event
+                # ----------------------------------------------------
+
+                # Initialize or load the DataFrame
+                if 'events_df' not in st.session_state:
+                    st.session_state['events_df'] = pd.DataFrame(
+                        columns=["tl_Date",
+                                 'tl_CustomerID',
+                                 'tl_CustomerName',
+                                 'tl_PetID',
+                                 'tl_PetName',
+                                 "tl_Cost",
+                                 "tl_Revenue",
+                                 "tl_Event",
+                                 "tl_Comment"])
+
+
+                # Define the dialog function
+                @st.dialog("Enter Event Details")
+                def enter_event_manually():
+                    with st.form("enter_event_manually"):
+                        event_date = st.date_input('Enter Event Date:')
+                        event_cost = st.number_input("Enter Cost:", min_value=0.0, step=1.0, key='event_cost')
+                        event_revenue = st.number_input("Enter Revenue:", min_value=0.0, step=1.0, key='event_revenue')
+                        event_type = st.text_input("Which kind of event?")
+                        event_comment = st.text_input("Add a comment or additional info")
+                        event_creator = st.text_input("Enter your name")
+                        submitted = st.form_submit_button("Submit")
+
+
+                        if submitted:
+                            date_stamp = datetime.datetime.now().strftime("%Y%m%d")
+                            new_event = pd.DataFrame([{
+                                "tl_Date": event_date,
+                                "tl_CustomerID": st.session_state.selected_customer_id,
+                                "tl_CustomerName": st.session_state.selected_customer_id,
+                                "tl_PetID": st.session_state.selected_pet_id,
+                                "tl_PetName": selected_pet_name,
+                                "tl_Cost": event_cost,
+                                "tl_Revenue": event_revenue,
+                                "tl_Event": event_type,
+                                "tl_Comment": event_comment + " - " + " [" + event_creator + " - " + date_stamp + "]",
+
+                            }])
+
+                            # Use pd.concat to add the new row to the DataFrame
+                            st.session_state['events_df'] = pd.concat([st.session_state['events_df'], new_event], ignore_index=True)
+
+                            # Save the updated DataFrame to CSV
+                            csv_path = "reference_data/manually_entered_events.csv"
+                            st.session_state['events_df'].to_csv(csv_path, index=False)
+
+                            # st.success("Event successfully added!")
+                            st.rerun()  # Close the dialog after submission
+
+
+                # Button to open the modal dialog
+                if st.button("Create Event Manually"):
+                    enter_event_manually()
+
+                # Display the updated DataFrame
+                # st.write(st.session_state['events_df'])
 
 # ----------------------------------------------------
 # Showing the full dataframe
 # ----------------------------------------------------
 
 # st.dataframe(pet_data)
+
+
+            else:
+                st.write("No events found for the selected pet.")
