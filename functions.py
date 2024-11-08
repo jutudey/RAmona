@@ -225,29 +225,6 @@ def get_contacts_by_name(first_name, last_name):
     conn.close()
     return df
 
-def get_contacts_by_name_v2(first_name=None, last_name=None):
-    # Load the DataFrame from session state
-    df = st.session_state.get('ss_petcare_plans')
-
-    # If df is not in session state, generate it
-    if df is None:
-        df = load_petcare_plans()
-
-    # Apply filter for first name if provided
-    if first_name:
-        df = df[df['OwnerFirstName'].str.contains(first_name, case=False, na=False)]
-
-    # Apply filter for last name if provided
-    if last_name:
-        df = df[df['OwnerLastName'].str.contains(last_name, case=False, na=False)]
-
-    # Select relevant columns and remove duplicates based on EvCustomerID
-    filtered_df = df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName']].drop_duplicates(subset='EvCustomerID')
-
-    return filtered_df
-
-
-
 def get_contact_details(contact_code):
     conn = sqlite3.connect('ramona_db.db')
     query = f'''
@@ -313,8 +290,6 @@ def get_contact_details_v2(customer_id):
 
     # Select relevant columns
     return filtered_df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName']]
-
-
 
 def get_PaymentLinkDetails(customer_id, pet_id):
     conn = sqlite3.connect('ramona_db.db')
@@ -407,8 +382,6 @@ AND i."Invoice #" = {invoice_id};
     conn.close()
     return df
 
-# Collect Invoices
-
 def get_invoices(pet_id):
     conn = sqlite3.connect('ramona_db.db')
     query = f'''
@@ -478,17 +451,6 @@ def get_invoices_wo_subsc(pet_id):
 # File management
 #----------------------------------------------------
 
-def list_all_files_in_data_folder():
-    folder_path = "data"
-    try:
-        files = sorted(os.listdir(folder_path))
-        file_list = [file for file in files if not (file.startswith("~") or file.startswith("."))]
-        return file_list
-    except FileNotFoundError:
-        return [f"The folder '{folder_path}' does not exist."]
-    except Exception as e:
-        return [f"An error occurred: {e}"]
-
 def load_newest_file(filename_prefix):
     folder_path = "data"
     try:
@@ -508,6 +470,19 @@ def load_newest_file(filename_prefix):
         print(f"The folder '{folder_path}' does not exist.")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+# def list_all_files_in_data_folder():
+#     folder_path = "data"
+#     try:
+#         files = sorted(os.listdir(folder_path))
+#         file_list = [file for file in files if not (file.startswith("~") or file.startswith("."))]
+#         return file_list
+#     except FileNotFoundError:
+#         return [f"The folder '{folder_path}' does not exist."]
+#     except Exception as e:
+#         return [f"An error occurred: {e}"]
+
 
 #----------------------------------------------------
 # Load data (ETL)
@@ -876,6 +851,60 @@ def get_ev_invoice_lines(invoice_id=None):
     st.session_state['df'] = df
 
     return df
+
+def get_wellness_plans(pet_id=None):
+    # import data lines
+    filename_prefix = "evWellnessPlans-"
+
+    df = load_newest_file(filename_prefix)
+
+    df['Wellness Plan Membership Animal Code'] = df['Wellness Plan Membership Animal Code'].apply(normalize_id)
+    df['Wellness Plan Membership ID'] = df['Wellness Plan Membership ID'].astype(str)
+    df['Wellness Plan Membership Date'] = pd.to_datetime(df['Wellness Plan Membership Date'], format='%d-%m-%Y')
+    df['Wellness Plan Membership End Date'] = pd.to_datetime(df['Wellness Plan Membership End Date'], format='%d-%m-%Y')
+
+    owner_data = get_ezyvet_pet_details()
+    # owner_data['Owner Contact Code'] = owner_data['Owner Contact Code'].apply(normalize_id)
+
+    def lookup_owner_data(pet_id):
+        matching_row = owner_data[owner_data['Animal Code'] == pet_id]
+        if not matching_row.empty:
+            return matching_row['Owner Contact Code'].values[0]
+        return "Not found in lookup"
+
+    # Apply the lookup function to each row in invoice_lines
+    df['customer_id'] = df['Wellness Plan Membership Animal Code'].apply(lookup_owner_data)
+
+    if pet_id:
+        wellness_plan_for_pet = df[df['Wellness Plan Membership Animal Code'] == pet_id]
+        return wellness_plan_for_pet
+
+    return df
+
+#----------------------------------------------------
+# Return data from dataframes
+#----------------------------------------------------
+
+def get_contacts_by_name_v2(first_name=None, last_name=None):
+    # Load the DataFrame from session state
+    df = st.session_state.get('ss_petcare_plans')
+
+    # If df is not in session state, generate it
+    if df is None:
+        df = load_petcare_plans()
+
+    # Apply filter for first name if provided
+    if first_name:
+        df = df[df['OwnerFirstName'].str.contains(first_name, case=False, na=False)]
+
+    # Apply filter for last name if provided
+    if last_name:
+        df = df[df['OwnerLastName'].str.contains(last_name, case=False, na=False)]
+
+    # Select relevant columns and remove duplicates based on EvCustomerID
+    filtered_df = df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName']].drop_duplicates(subset='EvCustomerID')
+
+    return filtered_df
 
 
 #----------------------------------------------------
@@ -1418,17 +1447,120 @@ def extract_tl_Cancellations():
     # return the aggregated DataFrame
     return cancellations
 
+def extract_tl_wellness_plans():
+    df = get_wellness_plans()
+    df = df[df['Wellness Plan Membership Status'] != 'Upcoming']
+    df_cancelled = df[df['Wellness Plan Membership Status'] == 'Cancelled']
+    df_active = df[df['Wellness Plan Membership Status'] == 'Active']
+    df_completed = df[df['Wellness Plan Membership Status'] == 'Completed']
+
+    # defining columns
+    df_start_all = df.assign(
+        tl_ID=df["Wellness Plan Membership ID"],
+        tl_Date=df["Wellness Plan Membership Date"],
+        tl_CustomerID=df["customer_id"],
+        tl_CustomerName="",
+        tl_PetID=df["Wellness Plan Membership Animal Code"],
+        tl_PetName=df["Wellness Plan Membership Animal Name"],
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=0,
+        tl_Event="Joined Wellness Plan",
+        tl_Comment=df["Wellness Plan Membership Wellness Plan Name"]
+
+    )
+
+    # defining columns
+    df_scheduled_completion = df_active.assign(
+        tl_ID=df_active["Wellness Plan Membership ID"],
+        tl_Date=df_active["Wellness Plan Membership End Date"],
+        tl_CustomerID=df_active["customer_id"],
+        tl_CustomerName="",
+        tl_PetID=df_active["Wellness Plan Membership Animal Code"],
+        tl_PetName=df_active["Wellness Plan Membership Animal Name"],
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=0,
+        tl_Event="Scheduled completion of Wellness Plan",
+        tl_Comment=df_active["Wellness Plan Membership Wellness Plan Name"]
+
+    )
+
+ # defining columns
+    df_cancelled = df_cancelled.assign(
+        tl_ID=df_cancelled["Wellness Plan Membership ID"],
+        tl_Date=df_cancelled["Wellness Plan Membership End Date"],
+        tl_CustomerID=df_cancelled["customer_id"],
+        tl_CustomerName="",
+        tl_PetID=df_cancelled["Wellness Plan Membership Animal Code"],
+        tl_PetName=df_cancelled["Wellness Plan Membership Animal Name"],
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=0,
+        tl_Event="Removed from Wellness Plan",
+        tl_Comment=df_cancelled["Wellness Plan Membership Wellness Plan Name"]
+
+    )
+
+ # defining columns
+    df_completion = df_completed.assign(
+        tl_ID=df_completed["Wellness Plan Membership ID"],
+        tl_Date=df_completed["Wellness Plan Membership End Date"],
+        tl_CustomerID=df_completed["customer_id"],
+        tl_CustomerName="",
+        tl_PetID=df_completed["Wellness Plan Membership Animal Code"],
+        tl_PetName=df_completed["Wellness Plan Membership Animal Name"],
+        tl_Cost=0,
+        tl_Discount=0,
+        tl_Revenue=0,
+        tl_Event="Wellness Plan Completed",
+        tl_Comment=df_completed["Wellness Plan Membership Wellness Plan Name"]
+
+    )
+
+
+
+    merged_df = pd.concat(
+        [df_start_all, df_cancelled, df_scheduled_completion, df_completion],
+        ignore_index=True)
+
+    # Reducing the DataFrame
+    merged_df = merged_df[[
+        "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
+        "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event", "tl_Comment"
+        ]]
+
+
+    return merged_df
+
 def build_tl():
     # import data for TimeLine
+    print("Loading Invoice Lines...")
     tl_invoices = extract_tl_Invoices()
+    print("Loading Cancellations...")
     tl_change_plan = extract_tl_Cancellations()
+    print("Loading Death........")
     tl_pet_death = extract_tl_pet_data_death()
+    print("Loading Initial Registrations...")
     tl_initial_registration = extract_tl_pet_data_registration()
+    print("Loading Payments...")
     tl_payments = extract_tl_Payments()
+    print("Loading Last Visits...")
     tl_last_visit = extract_tl_pet_data_last_visit()
+    print("Loading Wellness Plans...")
+    tl_wellness_plans = extract_tl_wellness_plans()
+    print("Building the Timeline table...")
+
 
     # Concatenate the DataFrames
-    merged_df = pd.concat([tl_invoices, tl_change_plan, tl_pet_death, tl_initial_registration, tl_payments, tl_last_visit], ignore_index=True)
+    merged_df = pd.concat([tl_invoices,
+                           tl_change_plan,
+                           tl_pet_death,
+                           tl_initial_registration,
+                           tl_payments,
+                           tl_last_visit,
+                           tl_wellness_plans
+                           ], ignore_index=True)
 
     merged_df["tl_Date"] = pd.to_datetime(merged_df["tl_Date"])
     merged_df["tl_CustomerID"] = merged_df["tl_CustomerID"].astype(str)
@@ -1444,9 +1576,9 @@ def build_tl():
     # Sort the merged DataFrame by the 'date' column
     tl = merged_df.sort_values(by='tl_Date', ascending=True)  # Set ascending=False if you want descending order
 
-    print("should be less than 26889")
-
     st.session_state.tl = 'tl'
+    print("Saved Timeline data to Session State")
+
 
     return tl
 

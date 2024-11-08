@@ -249,11 +249,11 @@ with tab1:
 
                         st.write(f"### Details for Invoice no.: {selected_ev_invoice_no} for {ar_pet_name}")
 
-                        ar_invoice_lines = functions.get_invoiceDetails(selected_ev_invoice_no)
-                        _ar_invoice_lines = functions.get_ev_invoice_lines(selected_ev_invoice_no)
+                        # ar_invoice_lines = functions.get_invoiceDetails(selected_ev_invoice_no)
+                        ar_invoice_lines = functions.get_ev_invoice_lines(selected_ev_invoice_no)
 
                         st.dataframe(
-                            _ar_invoice_lines[['Product Name', "Product Cost", 'Discount(£)', "Total Invoiced (incl)"]])
+                            ar_invoice_lines[['Product Name', "Product Cost", 'Discount(£)', "Total Invoiced (incl)"]])
 
 
                     except IndexError:
