@@ -860,8 +860,8 @@ def get_wellness_plans(pet_id=None):
 
     df['Wellness Plan Membership Animal Code'] = df['Wellness Plan Membership Animal Code'].apply(normalize_id)
     df['Wellness Plan Membership ID'] = df['Wellness Plan Membership ID'].astype(str)
-    df['Wellness Plan Membership Date'] = pd.to_datetime(df['Wellness Plan Membership Date'], format='%d-%m-%Y')
-    df['Wellness Plan Membership End Date'] = pd.to_datetime(df['Wellness Plan Membership End Date'], format='%d-%m-%Y')
+    df['Wellness Plan Membership Date'] = pd.to_datetime(df['Wellness Plan Membership Date'], format='%d.%m.%Y')
+    df['Wellness Plan Membership End Date'] = pd.to_datetime(df['Wellness Plan Membership End Date'], format='%d.%m.%Y')
 
     owner_data = get_ezyvet_pet_details()
     # owner_data['Owner Contact Code'] = owner_data['Owner Contact Code'].apply(normalize_id)
@@ -1242,7 +1242,6 @@ def extract_tl_Payments():
     # return the aggregated DataFrame
     return payments
 
-
 def extract_tl_pet_data_death():
     filename_prefix = "Animals Report-"
 
@@ -1533,6 +1532,11 @@ def extract_tl_wellness_plans():
 
     return merged_df
 
+def get_manually_entered_tl_events():
+#     get csv file called reference_data/manually_entered_events.csv
+    manually_entered_events = pd.read_csv("reference_data/manually_entered_events.csv")
+    return manually_entered_events
+
 def build_tl():
     # import data for TimeLine
     print("Loading Invoice Lines...")
@@ -1550,6 +1554,7 @@ def build_tl():
     print("Loading Wellness Plans...")
     tl_wellness_plans = extract_tl_wellness_plans()
     print("Building the Timeline table...")
+    tl_manually_entered = get_manually_entered_tl_events()
 
 
     # Concatenate the DataFrames
@@ -1559,7 +1564,8 @@ def build_tl():
                            tl_initial_registration,
                            tl_payments,
                            tl_last_visit,
-                           tl_wellness_plans
+                           tl_wellness_plans,
+                           tl_manually_entered
                            ], ignore_index=True)
 
     merged_df["tl_Date"] = pd.to_datetime(merged_df["tl_Date"])
@@ -1568,6 +1574,17 @@ def build_tl():
     merged_df["tl_Revenue"] = merged_df["tl_Revenue"].astype("float64")
     merged_df["tl_Cost"] = merged_df["tl_Cost"].astype("float64")
 
+    conditions = [
+        merged_df['tl_Event'] == "Recurring Payment",
+        (merged_df['tl_Event'] == "Pet passed away") | (merged_df['tl_Event'] == "Initial registration"),
+        (merged_df['tl_Event'] == "Joined Wellness Plan") | (merged_df['tl_Event'] == "Scheduled completion of Wellness Plan") | (merged_df['tl_Event'] == "Removed from Wellness Plan")
+    ]
+
+    choices = ["Payment",
+               "Key Events",
+               "Wellness Plan"]
+
+    merged_df['tl_Group'] = np.select(conditions, choices, default="")
     test_pets = get_test_pets()
 
     # Drop rows from merged_df where "tl_PetID" is present in "eV_Pet_ID" of test_pets
@@ -1597,6 +1614,13 @@ def rename_tl_columns(df):
         "tl_Profit": "P&L"
         }, inplace=True)
     return renamed_df
+
+def adding_manually_entered_tl_events():
+    tl_manually_entered = get_manually_entered_tl_events()
+    added_manually_entered = pd.concat([st.session_state.tl,
+                           tl_manually_entered
+                           ], ignore_index=True)
+    return added_manually_entered
 
 
 #----------------------------------------------------

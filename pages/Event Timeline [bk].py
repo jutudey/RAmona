@@ -4,8 +4,7 @@ import pandas as pd
 import functions
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from streamlit_timeline import timeline
-import json
+
 from PIL import Image
 
 app_name = functions.set_page_definitition()
@@ -176,7 +175,7 @@ if not pet_data.empty:
             st.markdown(tl_table.to_markdown(index=False), unsafe_allow_html=True)
 
             ############################################################
-            # Display timeline with plotly
+            # Display the selected pet details
             ############################################################
 
             # Display visual timeline for the selected pet
@@ -215,49 +214,7 @@ if not pet_data.empty:
                 ax.set_ylim(-0.1, 1)
                 ax.set_yticks([])
 
-                # st.pyplot(fig)
-
-                ############################################################
-                # Display timeline with Timeline component
-                ############################################################
-
-                # Ensure the 'tl_Date' column is in datetime format
-                tl_for_pet['tl_Date'] = pd.to_datetime(tl_for_pet['tl_Date'])
-
-                # Create new columns for year, month, day, hour, minute, and second
-                tl_for_pet['Year'] = tl_for_pet['tl_Date'].dt.year
-                tl_for_pet['Month'] = tl_for_pet['tl_Date'].dt.month
-                tl_for_pet['Day'] = tl_for_pet['tl_Date'].dt.day
-                tl_for_pet['Hour'] = tl_for_pet['tl_Date'].dt.hour
-                tl_for_pet.loc[:, 'Minute'] = tl_for_pet['tl_Date'].dt.minute
-                tl_for_pet.loc[:, 'Second'] = tl_for_pet['tl_Date'].dt.second
-
-                data = {
-                    "title": {
-                        "text": {
-                            "headline": f"Key Events for {selected_pet_name}",
-                            "text": "Timeline </p>"
-                        }
-                    },
-                    "events": [
-                        {
-                            "start_date": {
-                                "year": row['Year'],
-                                "month": row['Month'],
-                                "day": row['Day'],
-                                "hour": row['Hour'],
-                                "minute": row['Minute'],
-                                "second": row['Second'],
-                                "display_date": row['tl_Date'].strftime('%d-%m-%Y'),
-                            "group": row['tl_Group']
-                            },
-                            "text": {
-                                "headline": row['tl_Event'],
-                                "text": row['tl_Comment']
-                            }
-                        } for idx, row in tl_for_pet.iterrows()
-                    ]
-                }
+                st.pyplot(fig)
 
 
 
@@ -279,13 +236,6 @@ if not pet_data.empty:
                                  "tl_Event",
                                  "tl_Comment"])
 
-                # st.dataframe(tl_for_pet)
-
-
-
-                ############################################################
-                # Manually add event
-                ############################################################
 
                 # Define the dialog function
                 @st.dialog("Enter Event Details")
@@ -322,11 +272,7 @@ if not pet_data.empty:
                             csv_path = "reference_data/manually_entered_events.csv"
                             st.session_state['events_df'].to_csv(csv_path, index=False)
 
-                            # Reload the data
-                            tl_manually_entered = functions.get_manually_entered_tl_events()
-                            # st.session_state.tl = pd.concat([st.session_state.tl, tl_manually_entered],
-                            #                                 ignore_index=True)
-
+                            # st.success("Event successfully added!")
                             st.rerun()  # Close the dialog after submission
 
 
@@ -334,12 +280,8 @@ if not pet_data.empty:
                 if st.button("Create Event Manually"):
                     enter_event_manually()
 
-
-
                 # Display the updated DataFrame
                 # st.write(st.session_state['events_df'])
-
-                timeline(data, height=400)
 
 # ----------------------------------------------------
 # Showing the full dataframe
