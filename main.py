@@ -12,6 +12,15 @@ app_name = functions.set_page_definitition()
 functions.initialize_session_state()
 print('Session state initialised')
 
+if st.button("Process all files"):
+    # st.session_state.tl = None
+    # st.session_state.all_invoice_lines = None
+    # st.session_state.adyenlinks = None
+    st.session_state.tl = functions.build_tl()
+    st.session_state.adyenlinks = functions.load_adyen_links()
+    st.session_state.all_invoice_lines = functions.get_ev_invoice_lines()
+    functions.initialize_session_state()
+
 invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks
 selected_invoice_no = st.session_state.selected_invoice_no

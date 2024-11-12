@@ -223,35 +223,35 @@ if not pet_data.empty:
             fig, ax = plt.subplots(figsize=(12, 3))
 
             if not tl_for_pet['tl_Date'].empty:
-                ax.hlines(y=0, xmin=min(tl_for_pet['tl_Date']), xmax=max(tl_for_pet['tl_Date']), color='grey',
-                          linewidth=0.5)
-
-                # Ensure each event type has a unique color
-                unique_events = tl_for_pet['tl_Event'].unique()
-                event_color_map = {event: plt.cm.get_cmap('tab10')(i) for i, event in enumerate(unique_events)}
-
-                for idx, row in tl_for_pet.iterrows():
-                    ax.plot(row['tl_Date'], 0, "o", color=event_color_map[row['tl_Event']])
-
-                for idx, row in tl_for_pet.iterrows():
-                    ax.text(row['tl_Date'], 0.05, row['tl_Event'], ha="left", va="bottom", fontsize=7, rotation=40)
-
-                for spine in ax.spines.values():
-                    spine.set_visible(False)
-
-                ax.get_yaxis().set_visible(False)
-                ax.set_xlabel(f"Key events for {selected_pet_name}")
-                ax.tick_params(axis='x', which='both', pad=-5)
-
-                for tick in ax.get_xticklabels():
-                    tick.set_y(-0.05)
-
-                ax.xaxis.set_major_formatter(mdates.DateFormatter('%B %Y'))
-
-                plt.xticks(fontsize=7, rotation=30, color='grey')
-
-                ax.set_ylim(-0.1, 1)
-                ax.set_yticks([])
+                # ax.hlines(y=0, xmin=min(tl_for_pet['tl_Date']), xmax=max(tl_for_pet['tl_Date']), color='grey',
+                #           linewidth=0.5)
+                #
+                # # Ensure each event type has a unique color
+                # unique_events = tl_for_pet['tl_Event'].unique()
+                # event_color_map = {event: plt.cm.get_cmap('tab10')(i) for i, event in enumerate(unique_events)}
+                #
+                # for idx, row in tl_for_pet.iterrows():
+                #     ax.plot(row['tl_Date'], 0, "o", color=event_color_map[row['tl_Event']])
+                #
+                # for idx, row in tl_for_pet.iterrows():
+                #     ax.text(row['tl_Date'], 0.05, row['tl_Event'], ha="left", va="bottom", fontsize=7, rotation=40)
+                #
+                # for spine in ax.spines.values():
+                #     spine.set_visible(False)
+                #
+                # ax.get_yaxis().set_visible(False)
+                # ax.set_xlabel(f"Key events for {selected_pet_name}")
+                # ax.tick_params(axis='x', which='both', pad=-5)
+                #
+                # for tick in ax.get_xticklabels():
+                #     tick.set_y(-0.05)
+                #
+                # ax.xaxis.set_major_formatter(mdates.DateFormatter('%B %Y'))
+                #
+                # plt.xticks(fontsize=7, rotation=30, color='grey')
+                #
+                # ax.set_ylim(-0.1, 1)
+                # ax.set_yticks([])
 
                 # st.pyplot(fig)
 

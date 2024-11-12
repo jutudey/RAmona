@@ -65,9 +65,12 @@ with right_column:
         if st.button("Refresh Ramona Filelist"):
             st.rerun()
         if st.button("Process new files"):
-            st.session_state.tl = None
-            st.session_state.all_invoice_lines = None
-            st.session_state.adyenlinks = None
+            # st.session_state.tl = None
+            # st.session_state.all_invoice_lines = None
+            # st.session_state.adyenlinks = None
+            st.session_state.tl = functions.build_tl()
+            st.session_state.adyenlinks = functions.load_adyen_links()
+            st.session_state.all_invoice_lines = functions.get_ev_invoice_lines()
             functions.initialize_session_state()
 
 
