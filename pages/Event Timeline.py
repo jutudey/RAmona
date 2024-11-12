@@ -18,6 +18,7 @@ st.title("⏳   Event Timeline for Pet")
 
 functions.initialize_session_state()
 
+
 invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks
 print("Session state invoice id: " + st.session_state.selected_invoice_no)
@@ -70,7 +71,7 @@ if first_name or last_name or pet_name:
     contacts_data = functions.get_contacts_by_name_v2(first_name=first_name,
                                                       last_name=last_name,
                                                       pet_name=pet_name)
-    print(contacts_data)
+    # print(contacts_data)
 
     if not contacts_data.empty:
         if pet_name:
@@ -118,8 +119,8 @@ if not customer_data.empty:
 # ----------------------------------------------------
 
 pet_data = functions.load_ezyvet_customers(st.session_state.selected_customer_id)
-print("pet_data:")
-print(pet_data)
+# print("pet_data:")
+# print(pet_data)
 if not pet_data.empty:
     st.write("### Pet Details:")
     pet_data_display = pet_data[['Animal Code', 'Animal Name','Animal Record Created At', 'Has Passed Away', "Active", "Last Visit"]]

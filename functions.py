@@ -1,5 +1,6 @@
 import numpy as np
 import streamlit as st
+from streamlit import session_state as ss
 import sqlite3
 import pandas as pd
 from PIL import Image
@@ -452,6 +453,26 @@ def get_invoices_wo_subsc(pet_id):
 #----------------------------------------------------
 
 def load_newest_file(filename_prefix):
+    folder_path = "data"
+    try:
+        files = os.listdir(folder_path)
+        invoice_files = [file for file in files if file.startswith(filename_prefix)]
+        if invoice_files:
+            highest_file = max(invoice_files)
+            print(highest_file)
+            file_path = os.path.join(folder_path, highest_file)
+            if highest_file.endswith(".csv"):
+                df = pd.read_csv(file_path, low_memory=False)
+                return df
+            elif highest_file.endswith(".xlsx"):
+                df = pd.read_excel(file_path)
+                return df
+    except FileNotFoundError:
+        print(f"The folder '{folder_path}' does not exist.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def get_newest_filename(filename_prefix):
     folder_path = "data"
     try:
         files = os.listdir(folder_path)
@@ -1644,8 +1665,9 @@ def enter_manual_tl_event(selected_pet_name):
     event_signature = '[' + event_creator + ' - ' + date_stamp + ']'
     st.button('Submit')
 
-def multi_selectbox(df, column_name1, column_name2=None, column_name3=None):
-    selected_id = st.dataframe(df, on_select="rerun", selection_mode="single-row")
+def multi_selectbox(df, column_name1, column_name2=None, column_name3=None, height=None):
+    # df = df.reset_index(drop=True)
+    selected_id = st.dataframe(df, height=height, hide_index=True, on_select="rerun", selection_mode="single-row")
 
     if selected_id:
         # st.write("Selected rows:", selection)
