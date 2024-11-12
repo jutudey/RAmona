@@ -20,9 +20,10 @@ functions.initialize_session_state()
 
 invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks
-selected_invoice_no = st.session_state.selected_invoice_no
-selected_customer_id = st.session_state.selected_customer_id
-selected_pet_id = st.session_state.selected_pet_id
+print("Session state invoice id: " + st.session_state.selected_invoice_no)
+print("Session state customer id: " + st.session_state.selected_customer_id)
+print("Session state pet id: ")
+print(st.session_state.selected_pet_id)
 
 # st.header('selected_pet_id : ' + str(st.session_state.selected_pet_id))
 # st.header('selected_customer_id : ' + str(st.session_state.selected_customer_id))
@@ -31,33 +32,70 @@ selected_pet_id = st.session_state.selected_pet_id
 # Search for client details
 # ----------------------------------------------------
 
-st.sidebar.subheader("Search for client")
+st.sidebar.subheader("Search")
 
 # Create a text input to search by EvCustomerID
-customer_id = st.sidebar.text_input('Enter Customer ID:', '')
+customer_id = st.sidebar.text_input('🆔 Enter Customer ID:', '')
 
 # Add a search box for First Name
-first_name = st.sidebar.text_input('Enter First Name:', '')
+first_name = st.sidebar.text_input('👤 Enter First Name:', '')
 
 # Add a search box for Last Name
-last_name = st.sidebar.text_input('Enter Last Name:', '')
+last_name = st.sidebar.text_input('👤 Enter Last Name:', '')
+
+# Add a search box for Pet Name
+pet_name = st.sidebar.text_input('🐶 Enter Pet Name:', '')
 
 customer_data = pd.DataFrame()  # Initialize contact_data to avoid NameError
 
+# Button to clear all input boxes and session states
+if st.sidebar.button('Clear All'):
+    customer_id = ''
+    first_name = ''
+    last_name = ''
+    pet_name = ''
+    st.session_state.selected_invoice_no = ''
+    st.session_state.selected_customer_id = ''
+    st.session_state.selected_pet_id = ''
+    st.rerun()
+
+# search by customer id:
+if customer_id:
+    st.session_state.selected_customer_id = customer_id
+
+    # st.warning(st.session_state.selected_customer_id)
+
 # Search by names
-if first_name or last_name:
-    # contacts_data_old = functions.get_contacts_by_name(first_name, last_name)
-    # st.sidebar.write(contacts_data_old)
-    contacts_data = functions.get_contacts_by_name_v2(first_name, last_name)
-    # st.sidebar.write(contacts_data)
+if first_name or last_name or pet_name:
+    contacts_data = functions.get_contacts_by_name_v2(first_name=first_name,
+                                                      last_name=last_name,
+                                                      pet_name=pet_name)
+    print(contacts_data)
 
     if not contacts_data.empty:
-        selected_contact = st.selectbox('Select a Contact:',
-                                        contacts_data["EvCustomerID"].astype(str) + ' - ' + contacts_data[
-                                            "OwnerFirstName"] + ' ' + contacts_data["OwnerLastName"])
-        st.session_state.selected_customer_id = selected_contact.split(' - ')[0]
+        if pet_name:
+            selected_contact = st.selectbox('Select a Contact:',
+                                            contacts_data["EvCustomerID"].astype(str) + ' - ' + contacts_data[
+                                                "OwnerFirstName"] + ' ' + contacts_data["OwnerLastName"] + ' - ' + contacts_data["PetName"])
+            st.session_state.selected_customer_id = selected_contact.split(' - ')[0]
+        else:
+            selected_contact = st.selectbox('Select a Contact:',
+                                            contacts_data["EvCustomerID"].astype(str) + ' - ' + contacts_data[
+                                                "OwnerFirstName"] + ' ' + contacts_data["OwnerLastName"])
+            st.session_state.selected_customer_id = selected_contact.split(' - ')[0]
     else:
-        st.write("No contacts found with the given name(s).")
+        st.warning("No contacts found with the given name(s).")
+
+# if pet_name:
+#     contacts_data = functions.get_contacts_by_name_v2(pet_name=pet_name)
+#     if not contacts_data.empty:
+#         selected_contact = st.selectbox('Select a Pet:',
+#                                     contacts_data["EvCustomerID"].astype(str) + ' - ' + contacts_data[
+#                                         "OwnerFirstName"] + ' ' + contacts_data["OwnerLastName"] + ' - ' + contacts_data["PetName"])
+#         st.session_state.selected_customer_id = selected_contact.split(' - ')[0]
+#     else:
+#         st.warning("No pets found with the given name.")
+
 
 # Display contact details if EvCustomerID is provided
 if st.session_state.selected_customer_id:
@@ -79,30 +117,25 @@ if not customer_data.empty:
 # select Pet
 # ----------------------------------------------------
 
-# pet_data = functions.get_pet_details(st.session_state.selected_customer_id)
 pet_data = functions.load_ezyvet_customers(st.session_state.selected_customer_id)
-# st.dataframe(pet_data)
+print("pet_data:")
+print(pet_data)
 if not pet_data.empty:
     st.write("### Pet Details:")
     pet_data_display = pet_data[['Animal Code', 'Animal Name','Animal Record Created At', 'Has Passed Away', "Active", "Last Visit"]]
-    st.markdown(pet_data_display.to_markdown(index=False), unsafe_allow_html=True)
+    # st.markdown(pet_data_display.to_markdown(index=False), unsafe_allow_html=True)
 
     # If there are multiple pets, allow the user to select one
     if len(pet_data) > 1:
-        selected_pet_name = st.radio(
-            "Select Pet:",
-            pet_data['Animal Name'],
-            index=pet_data_display['Animal Name'].tolist().index(
-                pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Animal Name'].values[0]
-            ) if st.session_state.selected_pet_id in pet_data['Animal Code'].values else 0,
-            horizontal=True
-        )
-
+        try:
+            selected_pet_id, selected_pet_name = functions.multi_selectbox(pet_data_display, 'Animal Code', "Animal Name")
+            st.session_state.selected_pet_id = selected_pet_id
+            st.session_state.selected_pet_name = selected_pet_name
+        except IndexError:
+            pass
     else:
         selected_pet_name = pet_data_display['Animal Name'].iloc[0]
-
-    st.session_state.selected_pet_id = pet_data.loc[pet_data['Animal Name'] == selected_pet_name, 'Animal Code'].values[0]
-
+        st.session_state.selected_pet_id = pet_data.loc[pet_data['Animal Name'] == selected_pet_name, 'Animal Code'].astype(str).values[0]    # st.header(st.session_state.selected_pet_id)
 
     ############################################################
     # Display the selected pet details
@@ -122,9 +155,10 @@ if not pet_data.empty:
         # Prepare data for Client Timeline
         tl = st.session_state.tl
         # st.dataframe(tl)
-        # st.write(str(st.session_state.selected_pet_id))
+        # st.write(st.session_state.selected_pet_id)
         filt = (tl["tl_PetID"] == str(st.session_state.selected_pet_id))
-        tl_for_pet = tl[filt]
+        # tl_for_pet = tl[filt]
+        tl_for_pet = tl[tl["tl_PetID"] == st.session_state.selected_pet_id]
         # Replace any NaN with an empty string in tl_Comment
         tl_for_pet['tl_Comment'] = tl_for_pet['tl_Comment'].fillna('')
         # st.dataframe(tl_for_pet)
@@ -324,8 +358,7 @@ if not pet_data.empty:
 
                             # Reload the data
                             tl_manually_entered = functions.get_manually_entered_tl_events()
-                            # st.session_state.tl = pd.concat([st.session_state.tl, tl_manually_entered],
-                            #                                 ignore_index=True)
+                            st.session_state.tl = pd.concat([st.session_state.tl, tl_manually_entered], ignore_index=True)
 
                             st.rerun()  # Close the dialog after submission
 

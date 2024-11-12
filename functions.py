@@ -199,7 +199,7 @@ def initialize_session_state():
     if 'selected_pet_id' not in st.session_state:
         st.session_state.selected_pet_id = ""
 
-
+    print("Session state initialized")
 
 #----------------------------------------------------
 # Old SQL functions
@@ -567,9 +567,11 @@ def load_ezyvet_customers(customer_id=None):
     df = load_newest_file(filename_prefix)
 
     if customer_id == None:
+        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id).astype(str)
         return df
     else:
         filt = (df['Owner Contact Code'] == customer_id)
+        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id).astype(str)
         df = df[filt]
         return df
 
@@ -580,10 +582,10 @@ def get_ezyvet_pet_details(pet_id=None):
     df = load_newest_file(filename_prefix)
 
     if pet_id == None:
-        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id)
+        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id).astype(str)
         return df
     else:
-        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id)
+        df.loc[:, 'Animal Code'] = df['Animal Code'].apply(normalize_id).astype(str)
         filt = (df['Animal Code'] == pet_id)
         df = df[filt]
         return df
@@ -885,7 +887,7 @@ def get_wellness_plans(pet_id=None):
 # Return data from dataframes
 #----------------------------------------------------
 
-def get_contacts_by_name_v2(first_name=None, last_name=None):
+def get_contacts_by_name_v2(first_name=None, last_name=None, pet_name=None):
     # Load the DataFrame from session state
     df = st.session_state.get('ss_petcare_plans')
 
@@ -901,8 +903,12 @@ def get_contacts_by_name_v2(first_name=None, last_name=None):
     if last_name:
         df = df[df['OwnerLastName'].str.contains(last_name, case=False, na=False)]
 
+    # Apply filter for pet name if provided
+    if pet_name:
+        df = df[df['PetName'].str.contains(pet_name, case=False, na=False)]
+
     # Select relevant columns and remove duplicates based on EvCustomerID
-    filtered_df = df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName']].drop_duplicates(subset='EvCustomerID')
+    filtered_df = df[['EvCustomerID', 'OwnerFirstName', 'OwnerLastName', "PetName"]].drop_duplicates(subset='EvCustomerID')
 
     return filtered_df
 
@@ -1238,7 +1244,6 @@ def extract_tl_Payments():
 
     # st.header('output DF')
     # st.dataframe(payments)
-    print("hello")
     # return the aggregated DataFrame
     return payments
 
@@ -1639,5 +1644,26 @@ def enter_manual_tl_event(selected_pet_name):
     event_signature = '[' + event_creator + ' - ' + date_stamp + ']'
     st.button('Submit')
 
+def multi_selectbox(df, column_name1, column_name2=None, column_name3=None):
+    selected_id = st.dataframe(df, on_select="rerun", selection_mode="single-row")
+
+    if selected_id:
+        # st.write("Selected rows:", selection)
+        # Extract the selected row indices
+        selected_row = selected_id["selection"]["rows"]
+        # st.write(selected_row)
+        selection1 = df.iloc[selected_row][column_name1].values[0]
 
 
+        if column_name2:
+            selection1 = df.iloc[selected_row][column_name1].values[0]
+            selection2 = df.iloc[selected_row][column_name2].values[0]
+            return selection1, selection2
+
+        if column_name3:
+            selection1 = df.iloc[selected_row][column_name1].values[0]
+            selection2 = df.iloc[selected_row][column_name2].values[0]
+            selection3 = df.iloc[selected_row][column_name3].values[0]
+            return selection1, selection2, selection3
+
+        return selection1

@@ -10,6 +10,7 @@ app_name = functions.set_page_definitition()
 # ----------------------------------------------------
 
 functions.initialize_session_state()
+print('Session state initialised')
 
 invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks
