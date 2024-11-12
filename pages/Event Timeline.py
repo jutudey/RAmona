@@ -130,8 +130,8 @@ if not pet_data.empty:
     if len(pet_data) > 1:
         try:
             selected_pet_id, selected_pet_name = functions.multi_selectbox(pet_data_display, 'Animal Code', "Animal Name")
-            st.session_state.selected_pet_id = selected_pet_id
-            st.session_state.selected_pet_name = selected_pet_name
+            st.session_state.selected_pet_id = str(selected_pet_id)
+            st.session_state.selected_pet_name = str(selected_pet_name)
         except IndexError:
             pass
     else:
@@ -143,22 +143,25 @@ if not pet_data.empty:
     ############################################################
 
     if str(st.session_state.selected_pet_id) in str(pet_data['Animal Code']):
-        selected_pet_name = pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Animal Name'].values[0]
-        selected_pet_species = pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Species'].values[0]
+        try:
+            selected_pet_name = pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Animal Name'].values[0]
+            selected_pet_species = pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Species'].values[0]
 
-        if selected_pet_species == "Canine":
-            st.write(f"### 🐕  {selected_pet_name} - Key Events")
-        elif selected_pet_species == "Feline":
-            st.write(f"### 🐈  {selected_pet_name} - Key Events")
-        else:
-            st.write(f"### 🐁  {selected_pet_name} - Key Events")
+            if selected_pet_species == "Canine":
+                st.write(f"### 🐕  {selected_pet_name} - Key Events")
+            elif selected_pet_species == "Feline":
+                st.write(f"### 🐈  {selected_pet_name} - Key Events")
+            else:
+                st.write(f"### 🐁  {selected_pet_name} - Key Events")
+
+        except IndexError:
+            pass
 
         # Prepare data for Client Timeline
         tl = st.session_state.tl
         # st.dataframe(tl)
         # st.write(st.session_state.selected_pet_id)
-        filt = (tl["tl_PetID"] == str(st.session_state.selected_pet_id))
-        # tl_for_pet = tl[filt]
+
         tl_for_pet = tl[tl["tl_PetID"] == st.session_state.selected_pet_id]
         # Replace any NaN with an empty string in tl_Comment
         tl_for_pet['tl_Comment'] = tl_for_pet['tl_Comment'].fillna('')

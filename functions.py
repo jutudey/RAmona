@@ -456,9 +456,9 @@ def load_newest_file(filename_prefix):
     folder_path = "data"
     try:
         files = os.listdir(folder_path)
-        invoice_files = [file for file in files if file.startswith(filename_prefix)]
-        if invoice_files:
-            highest_file = max(invoice_files)
+        source_files = [file for file in files if file.startswith(filename_prefix)]
+        if source_files:
+            highest_file = max(source_files)
             print(highest_file)
             file_path = os.path.join(folder_path, highest_file)
             if highest_file.endswith(".csv"):
@@ -476,17 +476,19 @@ def get_newest_filename(filename_prefix):
     folder_path = "data"
     try:
         files = os.listdir(folder_path)
-        invoice_files = [file for file in files if file.startswith(filename_prefix)]
-        if invoice_files:
-            highest_file = max(invoice_files)
-            print(highest_file)
+        source_files = [file for file in files if file.startswith(filename_prefix)]
+        if source_files:
+            highest_file = max(source_files)
+            # print(highest_file)
             file_path = os.path.join(folder_path, highest_file)
+
             if highest_file.endswith(".csv"):
                 df = pd.read_csv(file_path, low_memory=False)
-                return df
+
+                return highest_file
             elif highest_file.endswith(".xlsx"):
                 df = pd.read_excel(file_path)
-                return df
+                return highest_file
     except FileNotFoundError:
         print(f"The folder '{folder_path}' does not exist.")
     except Exception as e:
@@ -613,9 +615,9 @@ def get_ezyvet_pet_details(pet_id=None):
 
 def load_adyen_links(file_path=None):
     # import data lines
-    invoice_lines_filename_prefix = "paymentLinks-"
+    filename_prefix = "paymentLinks-"
 
-    df = load_newest_file(invoice_lines_filename_prefix)
+    df = load_newest_file(filename_prefix)
 
     # df = pd.read_csv(file_path, index_col=0)
     df.drop(columns=['description', 'store', 'reusable'], inplace=True)
@@ -635,7 +637,6 @@ def load_adyen_links(file_path=None):
               and re.search(r"[ _-]", row['merchantReference'])):
           return 'PAYG - Vera Toolbox'
 
-      # return None
 
     # Apply the function to create the "Link Type" column
     df['Link Type'] = df.apply(set_link_type, axis=1)
@@ -875,7 +876,7 @@ def get_ev_invoice_lines(invoice_id=None):
 
     return df
 
-def get_wellness_plans(pet_id=None):
+def get_wellness_plans_bk(pet_id=None):
     # import data lines
     filename_prefix = "evWellnessPlans-"
 
@@ -885,6 +886,59 @@ def get_wellness_plans(pet_id=None):
     df['Wellness Plan Membership ID'] = df['Wellness Plan Membership ID'].astype(str)
     df['Wellness Plan Membership Date'] = pd.to_datetime(df['Wellness Plan Membership Date'], format='%d.%m.%Y')
     df['Wellness Plan Membership End Date'] = pd.to_datetime(df['Wellness Plan Membership End Date'], format='%d.%m.%Y')
+
+    owner_data = get_ezyvet_pet_details()
+    # owner_data['Owner Contact Code'] = owner_data['Owner Contact Code'].apply(normalize_id)
+
+    def lookup_owner_data(pet_id):
+        matching_row = owner_data[owner_data['Animal Code'] == pet_id]
+        if not matching_row.empty:
+            return matching_row['Owner Contact Code'].values[0]
+        return "Not found in lookup"
+
+    # Apply the lookup function to each row in invoice_lines
+    df['customer_id'] = df['Wellness Plan Membership Animal Code'].apply(lookup_owner_data)
+
+    if pet_id:
+        wellness_plan_for_pet = df[df['Wellness Plan Membership Animal Code'] == pet_id]
+        return wellness_plan_for_pet
+
+    return df
+
+def get_wellness_plans(pet_id=None):
+
+    # Load existing Wellness Plans
+    filename_prefix = "evWellnessPlans-"
+    df = load_newest_file(filename_prefix)
+    df['Wellness Plan Membership Animal Code'] = df['Wellness Plan Membership Animal Code'].apply(normalize_id)
+    df['Wellness Plan Membership ID'] = df['Wellness Plan Membership ID'].astype(str)
+    df['Wellness Plan Membership Date'] = pd.to_datetime(df['Wellness Plan Membership Date'], format='%d.%m.%Y')
+    df['Wellness Plan Membership End Date'] = pd.to_datetime(df['Wellness Plan Membership End Date'], format='%d.%m.%Y')
+
+    st.dataframe(df)
+    df.info()
+
+
+    # Load modified Wellness Plans
+    filename_prefix = "WellnessPlanMembership_Export [gvak.euw1.ezyvet.com]"
+    modified_wps = load_newest_file(filename_prefix)
+
+    modified_wps['Wellness Plan Membership Animal Code'] = modified_wps['Wellness Plan Membership Animal Code'].apply(normalize_id)
+    modified_wps['Wellness Plan Membership ID'] = modified_wps['Wellness Plan Membership ID'].astype(str)
+    modified_wps['Wellness Plan Membership Date'] = pd.to_datetime(modified_wps['Wellness Plan Membership Date'], format='%d-%m-%Y')
+    modified_wps['Wellness Plan Membership End Date'] = pd.to_datetime(modified_wps['Wellness Plan Membership End Date'], format='%d-%m-%Y')
+
+    st.dataframe(modified_wps)
+    modified_wps.info()
+
+    # Merge modified Wellness Plans into existing Wellness Plans
+    df = df.set_index('Wellness Plan Membership ID')
+    modified_wps = modified_wps.set_index('Wellness Plan Membership ID')
+    df.update(modified_wps)
+    df = pd.concat([df, modified_wps[~modified_wps.index.isin(df.index)]], axis=0).reset_index()
+
+    st.dataframe(df)
+    df.info()
 
     owner_data = get_ezyvet_pet_details()
     # owner_data['Owner Contact Code'] = owner_data['Owner Contact Code'].apply(normalize_id)
@@ -939,7 +993,7 @@ def get_contacts_by_name_v2(first_name=None, last_name=None, pet_name=None):
 #----------------------------------------------------
 
 def extract_tl_Invoices(pet_id=None, customer_id=None):
-    filename_prefix = "Invoice Lines-"
+    filename_prefix = "Invoice Lines Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)
