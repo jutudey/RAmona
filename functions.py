@@ -200,7 +200,7 @@ def initialize_session_state():
     if 'selected_pet_id' not in st.session_state:
         st.session_state.selected_pet_id = ""
 
-    print("Session state initialized")
+    # print("Session state initialized")
 
 #----------------------------------------------------
 # Old SQL functions
@@ -584,7 +584,7 @@ def load_petcare_plans():
     return df
 
 def load_ezyvet_customers(customer_id=None):
-    filename_prefix = "Animals Report-"
+    filename_prefix = "Animals_Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)
@@ -599,7 +599,7 @@ def load_ezyvet_customers(customer_id=None):
         return df
 
 def get_ezyvet_pet_details(pet_id=None):
-    filename_prefix = "Animals Report-"
+    filename_prefix = "Animals_Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)
@@ -1345,8 +1345,8 @@ def extract_tl_Payments():
     df.loc[special_case_mask, 'type'] = df.loc[special_case_mask, 'type'].astype(str) + ' ⚠️'
 
 
-    st.header('post-split df')
-    st.dataframe(df)
+    # st.header('post-split df')
+    # st.dataframe(df)
 
     # Identifying number of failed payments in a row
     # Create a subset where status is 'Refused'
@@ -1458,7 +1458,7 @@ def extract_tl_Payments():
     return payments
 
 def extract_tl_pet_data_death():
-    filename_prefix = "Animals Report-"
+    filename_prefix = "Animals_Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)
@@ -1505,7 +1505,7 @@ def extract_tl_pet_data_death():
     return dead_pets
 
 def extract_tl_pet_data_registration():
-    filename_prefix = "Animals Report-"
+    filename_prefix = "Animals_Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)
@@ -1552,7 +1552,7 @@ def extract_tl_pet_data_registration():
     return initial_registration
 
 def extract_tl_pet_data_last_visit():
-    filename_prefix = "Animals Report-"
+    filename_prefix = "Animals_Report-"
 
     # load data into df
     df = load_newest_file(filename_prefix)

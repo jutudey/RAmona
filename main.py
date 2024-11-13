@@ -9,17 +9,20 @@ app_name = functions.set_page_definitition()
 # defining session states
 # ----------------------------------------------------
 
-functions.initialize_session_state()
-print('Session state initialised')
+with st.spinner('Loading and preparing data...'):
+    print('Initialising Session state...')
+    functions.initialize_session_state()
+    print('Session state initialised')
 
 if st.button("Process all files"):
+    with st.spinner('Loading and preparing data...'):
     # st.session_state.tl = None
     # st.session_state.all_invoice_lines = None
     # st.session_state.adyenlinks = None
-    st.session_state.tl = functions.build_tl()
-    st.session_state.adyenlinks = functions.load_adyen_links()
-    st.session_state.all_invoice_lines = functions.get_ev_invoice_lines()
-    functions.initialize_session_state()
+        st.session_state.tl = functions.build_tl()
+        st.session_state.adyenlinks = functions.load_adyen_links()
+        st.session_state.all_invoice_lines = functions.get_ev_invoice_lines()
+        functions.initialize_session_state()
 
 invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks

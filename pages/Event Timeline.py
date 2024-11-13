@@ -21,9 +21,9 @@ functions.initialize_session_state()
 
 invoice_lines = st.session_state.all_invoice_lines
 adyenlinks = st.session_state.adyenlinks
-print("Session state invoice id: " + st.session_state.selected_invoice_no)
-print("Session state customer id: " + st.session_state.selected_customer_id)
-print("Session state pet id: ")
+print("1 TL Session state invoice id: " + st.session_state.selected_invoice_no)
+print("1 TL Session state customer id: " + st.session_state.selected_customer_id)
+print("1 TL Session state pet id: ")
 print(st.session_state.selected_pet_id)
 
 # st.header('selected_pet_id : ' + str(st.session_state.selected_pet_id))
@@ -97,22 +97,27 @@ if first_name or last_name or pet_name:
 #     else:
 #         st.warning("No pets found with the given name.")
 
+print("2 TL Session state invoice id: " + st.session_state.selected_invoice_no)
+print("2 TL Session state customer id: " + st.session_state.selected_customer_id)
+print("2 TL Session state pet id: ")
+print(st.session_state.selected_pet_id)
 
 # Display contact details if EvCustomerID is provided
 if st.session_state.selected_customer_id:
     customer_data = functions.get_contact_details_v2(st.session_state.selected_customer_id)
     if not customer_data.empty:
+
+        st.write("### Customer Details:")
+        st.write(f"Customer ID: {customer_data.iloc[0]['EvCustomerID']}")
+        st.write(f"First Name: {customer_data.iloc[0]['OwnerFirstName']}")
+        st.write(f"Last Name: {customer_data.iloc[0]['OwnerLastName']}")
         pass
-        # st.write("### Customer Details:")
-        # st.write(f"Customer ID: {customer_data.iloc[0]['EvCustomerID']}")
-        # st.write(f"First Name: {customer_data.iloc[0]['OwnerFirstName']}")
-        # st.write(f"Last Name: {customer_data.iloc[0]['OwnerLastName']}")
     else:
         st.info("No details found for this Customer ID")
 
 if not customer_data.empty:
     st.header(f"👤   {customer_data.iloc[0]['OwnerFirstName'].title()} "
-              f"{customer_data.iloc[0]['OwnerLastName'].title()}")
+              f"{customer_data.iloc[0]['OwnerLastName'].title()} ({customer_data.iloc[0]['EvCustomerID'].title()})")
 
 # ----------------------------------------------------
 # select Pet
@@ -148,7 +153,7 @@ if not pet_data.empty:
             selected_pet_species = pet_data.loc[pet_data['Animal Code'] == st.session_state.selected_pet_id, 'Species'].values[0]
 
             if selected_pet_species == "Canine":
-                st.write(f"### 🐕  {selected_pet_name} - Key Events")
+                st.write(f"### 🐕  {selected_pet_name}  ({st.session_state.selected_pet_id}) - Key Events")
             elif selected_pet_species == "Feline":
                 st.write(f"### 🐈  {selected_pet_name} - Key Events")
             else:
@@ -267,8 +272,8 @@ if not pet_data.empty:
                 tl_for_pet['Month'] = tl_for_pet['tl_Date'].dt.month
                 tl_for_pet['Day'] = tl_for_pet['tl_Date'].dt.day
                 tl_for_pet['Hour'] = tl_for_pet['tl_Date'].dt.hour
-                tl_for_pet.loc[:, 'Minute'] = tl_for_pet['tl_Date'].dt.minute
-                tl_for_pet.loc[:, 'Second'] = tl_for_pet['tl_Date'].dt.second
+                tl_for_pet['Minute'] = tl_for_pet['tl_Date'].dt.minute
+                tl_for_pet['Second'] = tl_for_pet['tl_Date'].dt.second
 
                 data = {
                     "title": {
