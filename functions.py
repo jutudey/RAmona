@@ -1,21 +1,22 @@
 import numpy as np
 import streamlit as st
-from streamlit import session_state as ss
+import config
 import sqlite3
 import pandas as pd
 from PIL import Image
 import re
 import os
 import datetime
-
-
+import zipfile
+from io import BytesIO
+import zipfile
 
 #----------------------------------------------------
 # Housekeeping
 #----------------------------------------------------
 
 def set_page_definitition():
-    app_name = "RAmona v0.1"
+    app_name = config.app_name
 
     # Loading Image using PIL
     icon = Image.open('content/Subsidiary Salmon Logo.png')
@@ -494,6 +495,32 @@ def get_newest_filename(filename_prefix):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+# Function to create a zip file of all files in the data folder
+def create_zip_file():
+    """
+    Create a zip file containing all files in the data folder.
+    Returns a BytesIO object containing the zip file.
+    """
+    data_folder = 'data'
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        for file in os.listdir(data_folder):
+            file_path = os.path.join(data_folder, file)
+            if os.path.isfile(file_path):
+                zip_file.write(file_path, os.path.basename(file_path))
+    zip_buffer.seek(0)
+    return zip_buffer
+
+def required_files_description(required_files_description):
+    st.header('Required Files')
+    st.write(f"In order to work properly the application requires up-to-date versions of the following files:")
+
+    for file_description in required_files_description:
+        st.markdown("##### " + file_description[0])
+        st.write('File name prefix: "' + file_description[1] + '"')
+        st.write('Newest file uploaded: ' + str(get_newest_filename(file_description[2])))
+        with st.expander('Where to find the file', expanded=False):
+            st.write(file_description[3])
 
 # def list_all_files_in_data_folder():
 #     folder_path = "data"

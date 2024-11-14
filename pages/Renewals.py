@@ -5,7 +5,7 @@ import plotly.express as px
 from streamlit_plotly_events import plotly_events
 import datetime
 
-app_name = functions.set_page_definitition()
+functions.set_page_definitition()
 st.title("Subscription Renewals")
 
 if 'tl' not in st.session_state:
