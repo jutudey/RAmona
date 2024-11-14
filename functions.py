@@ -7,6 +7,7 @@ from PIL import Image
 import re
 import os
 import datetime
+from datetime import datetime
 import zipfile
 from io import BytesIO
 import zipfile
@@ -202,6 +203,8 @@ def initialize_session_state():
         st.session_state.selected_pet_id = ""
 
     # print("Session state initialized")
+
+
 
 #----------------------------------------------------
 # Old SQL functions
@@ -522,16 +525,79 @@ def required_files_description(required_files_description):
         with st.expander('Where to find the file', expanded=False):
             st.write(file_description[3])
 
-# def list_all_files_in_data_folder():
-#     folder_path = "data"
-#     try:
-#         files = sorted(os.listdir(folder_path))
-#         file_list = [file for file in files if not (file.startswith("~") or file.startswith("."))]
-#         return file_list
-#     except FileNotFoundError:
-#         return [f"The folder '{folder_path}' does not exist."]
-#     except Exception as e:
-#         return [f"An error occurred: {e}"]
+def upload_file():
+    data_folder = config.data_folder
+    uploaded_files = st.file_uploader("Choose CSV or Excel files", type=["csv", "xlsx"], accept_multiple_files=True)
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            file_path = os.path.join(data_folder, uploaded_file.name)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+        st.success("Files uploaded successfully!")
+
+def merge_files():
+    # Specify the directory where your CSV files are stored
+    directory = "data/MergeData"
+    file_list = list_files(directory)
+
+    st.dataframe(file_list)
+
+    # Initialize an empty list to store individual DataFrames
+    dataframes = []
+
+    # Iterate over each file in the directory
+    for filename in os.listdir(directory):
+        if filename.endswith(".csv"):
+            filepath = os.path.join(directory, filename)
+            # Read the CSV file into a DataFrame
+            df = pd.read_csv(filepath)
+            # Append the DataFrame to the list
+            dataframes.append(df)
+
+    # Concatenate all DataFrames in the list into a single DataFrame
+    merged_df = pd.concat(dataframes, ignore_index=True)
+
+    # Split out duplicates into a separate DataFrame
+    duplicates_df = merged_df[merged_df.duplicated(keep=False)]
+    merged_df = merged_df.drop_duplicates(keep=False)
+
+    # Get the current date stamp
+    date_stamp = datetime.now().strftime("%Y%m%d")
+
+
+    filename_prefix = st.selectbox('Choose file name prefix :', ['evWellnessPlans', 'evNotApprovedInvoiceLines', 'evConsults', 'adyenPaymentLinks'])
+
+    if st.button("Merge Files"):
+        # Save the merged DataFrame and duplicates DataFrame to new CSV files
+        os.makedirs("data", exist_ok=True)
+        merged_df.to_csv(f"data/{filename_prefix}_{date_stamp}.csv", index=False)
+        duplicates_df.to_csv(f"data/{filename_prefix}_duplicates_{date_stamp}.csv", index=False)
+
+        st.warning(f"CSV files merged successfully into 'data/{filename_prefix}_{date_stamp}.csv")
+        st.warning(f"Duplicates saved into 'data/{filename_prefix}_duplicates_{date_stamp}.csv'")
+
+        # move all files in MergeData to page_archive
+        for filename in os.listdir(directory):
+            if filename.endswith(".csv"):
+                os.rename(os.path.join(directory, filename), os.path.join("data_archive", filename))
+
+        st.warning(f"Source files moved to folder '/data_archive'")
+
+def list_files(directory):
+    """
+    List all files in the data folder, excluding certain system files and Jupyter notebook checkpoints.
+    Returns a DataFrame with file names and their upload dates.
+    """
+    files = [f for f in os.listdir(directory) if f not in ['.DS_Store', '.ipynb_checkpoints'] and not f.endswith('.ipynb')]
+    file_data = []
+    for file in files:
+        file_path = os.path.join(directory, file)
+        if os.path.isfile(file_path):
+            upload_time = datetime.fromtimestamp(os.path.getctime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+            file_data.append((file, upload_time))
+    return pd.DataFrame(file_data, columns=["File Name", "Upload Date"]) if file_data else None
 
 
 #----------------------------------------------------
