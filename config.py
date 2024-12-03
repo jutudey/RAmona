@@ -2,12 +2,13 @@
 
 # this page contains the configuration for the app
 
+data_folder = 'data'
 
 app_name = "RAmona v0.1"
 
 required_files_description = [['ezyVet Invoice Lines',
                                    'Invoice Lines Report',
-                                   'Invoice Lines Report-',
+                                   'Invoice_Lines_Report-',
                                    'Go to ezyVet https://gvak.euw1.ezyvet.com/?recordclass=Reporting&recordid=0 and click on "Invoice Lines Report" in the File column'],
                                   ['ezyVet Animals Report',
                                    'Animals Report',
@@ -21,7 +22,7 @@ required_files_description = [['ezyVet Invoice Lines',
                                    'payment-history-', 'payment-history-',
                                    'Go to VERA Toolbox https://app.gardenvets.com/adad4b9d-8ad5-4ef4-9f3f-7916b0850882/reports/report-list and click on "Payment History" in the File column'],
                                   ['VERA Adyen Payment Links',
-                                   'paymentLinks',
-                                   'paymentLinks',
+                                   'paymentLinks_combined',
+                                   'paymentLinks_combined',
                                    'Go to VERA Toolbox https://app.gardenvets.com/adad4b9d-8ad5-4ef4-9f3f-7916b0850882/reports/report-list and click on "Payment History" in the File column']
                                   ]

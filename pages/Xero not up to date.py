@@ -6,7 +6,7 @@ app_name=functions.set_page_definitition()
 #----------------------------------------------------
 # filepaths
 #----------------------------------------------------
-PaymentLinks = "data/paymentLinks-2024-10-29.csv"
+PaymentLinks = "data/paymentLinks_combined.csv"
 XeroARreport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_AR_Report_for_Ramona.xlsx"
 XeroPAYGrecReport = "data/Education___Clinical_Research___Innovation_Group_Limited_-_PAYG_Reconciliation.xlsx"
 eV_animals = "data/Animals-2024-10-27-13-41-21.csv"
@@ -20,7 +20,7 @@ eV_animals = "data/Animals-2024-10-27-13-41-21.csv"
 df1 = functions.load_adyen_links()
 
 # Filter only PAYG links
-df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
+# df1 = df1[df1['Link Type'].str.contains('PAYG', na=True)]
 
 # st.subheader("Adyen PAYG Payment Links - df1")
 # st.write("Payment links related to failed subscription payments have been disregarded")
@@ -41,8 +41,8 @@ df3 = df3.merge(df1, left_on='Invoice Reference', right_on='id', how='left').set
 # If you don't need the 'id' column from df2 in df3, you can drop it
 # df3.drop('id', axis=1, inplace=True)
 
-# st.dataframe(df3)
-# st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months', '3 Months', 'Older', 'Total', "Adyen Status"]])
+st.dataframe(df3)
+# st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months', '3 Months', 'Older', 'Total', "Adyen Status", "merchantReference"]])
 # ])
 # st.write(len(df3))
 
@@ -98,7 +98,7 @@ df_not_in_df2 = df1.merge(df2, left_on='id', right_on='Adyen Ref ID', how='left'
 # Present AR report to user and select invoice to investigate
 #----------------------------------------------------
 # st.dataframe(df3)
-st.subheader("Xero not up to date")
+st.subheader(f"Xero not up to date - {ar_date}")
 st.write("This table contains invoices where Xero thinks it is not yet paid, but the Adyen link is **Completed**")
 
 not_active = (df3['Adyen Status'] == "completed")
@@ -109,8 +109,14 @@ df3 = df3[not_active]
 ar_invoice_id = ()
 st.dataframe(df3[['Invoice Number', 'Invoice Date',
                                   '< 1 Month', '1 Month', '2 Months',
-                                  '3 Months', 'Older', 'Total', "Adyen Status"]],
+                                  '3 Months', 'Older', 'Total', "Adyen Status", "merchantReference"]],
                              on_select="rerun", selection_mode="single-row")
+# show the total number of rows in df3
+st.write(f"Total number of invoices: {len(df3)}")
+# show the total amount in the total column
+st.write(f"Total amount: £{df3['Total'].sum():,.2f}")
+
+
 # # Display the selected row(s)
 # if selection:
 #     # st.write("Selected rows:", selection)
