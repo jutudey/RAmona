@@ -112,9 +112,11 @@ st.dataframe(df3[['Invoice Number', 'Invoice Date',
                                   '3 Months', 'Older', 'Total', "Adyen Status", "merchantReference"]],
                              on_select="rerun", selection_mode="single-row")
 # show the total number of rows in df3
-st.write(f"Total number of invoices: {len(df3)}")
+st.metric("Total number of invoices", len(df3))
 # show the total amount in the total column
-st.write(f"Total amount: £{df3['Total'].sum():,.2f}")
+total_amount = f"£{df3['Total'].sum():,.2f}"
+st.metric("Total amount", total_amount)
+
 
 
 

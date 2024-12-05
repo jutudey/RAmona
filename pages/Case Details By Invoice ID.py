@@ -18,9 +18,8 @@ selected_invoice_no = st.session_state.selected_invoice_no
 col1, col2, col3 = st.columns(3)
 
 # Add filters in separate columns
-with col1:
-    case_invoice_no = st.text_input('Invoice number', selected_invoice_no)
-    # case_invoice_no = 422642 # to force look during development
+
+case_invoice_no = st.sidebar.text_input('ezyVet Invoice number', selected_invoice_no)
 
 if case_invoice_no:
     # Fetch the first and last name for the defined Invoice number

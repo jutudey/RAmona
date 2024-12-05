@@ -372,9 +372,9 @@ if not pet_data.empty:
                             st.rerun()  # Close the dialog after submission
 
 
-                # Button to open the modal dialog
-                if st.button("Create Event Manually"):
-                    enter_event_manually()
+                # # Button to open the modal dialog
+                # if st.button("Create Event Manually"):
+                #     enter_event_manually()
 
 
 

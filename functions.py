@@ -1222,265 +1222,8 @@ def extract_tl_Invoices(pet_id=None, customer_id=None):
     # return the aggregated DataFrame
     return aggregated_invoices
 
-# def extract_tl_Payments_OLD():
-#     filename_prefix = "payment-history-"
-#
-#     # load data into df
-#     df = load_newest_file(filename_prefix)
-#
-#     # formatting datatypes
-#     df["ezyvetPetIDs"] = df["ezyvetPetIDs"].astype(str)
-#     df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
-#     df["cardDetails_lastFour"] = df["cardDetails_lastFour"].astype(str)
-#     df['amount'] = df['amount'].astype(float).round(2) / 100
-#     df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
-#     df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
-#
-#     # st.header('pre-split DF')
-#     # st.dataframe(df)
-#
-#     # splitting multipet payments
-#     # Add new column 'PetsInSubscription' with the number of pet IDs in 'ezyvetPetIDs'
-#     df['PetsInSubscription'] = df['ezyvetPetIDs'].apply(lambda x: x.count(',') + 1)
-#
-#     # Split rows with multiple pet IDs into separate rows
-#     df['ezyvetPetIDs'] = df['ezyvetPetIDs'].str.split(',')
-#     df = df.explode('ezyvetPetIDs')
-#
-#     # st.header('post-split DF')
-#     # st.dataframe(df)
-#
-#     # Identifying number of failed payments in a row
-#     # Create a subset where status is 'Refused'
-#     df_refused = df[df['status'] == 'Refused']
-#
-#     # Sort df_refused by 'ezyvetPetIDs' and 'eventDate'
-#     df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
-#
-#     # Add new column 'MissedPayments' with the sequence number for each 'ezyvetPetIDs'
-#     def assign_sequence(df):
-#         sequence = []
-#         current_seq = 1
-#         for i in range(len(df)):
-#             if i == 0:
-#                 sequence.append(current_seq)
-#             else:
-#                 if df['ezyvetPetIDs'][i] == df['ezyvetPetIDs'][i - 1] and pd.to_datetime(
-#                         df['eventDate'][i]) == pd.to_datetime(df['eventDate'][i - 1]) + pd.Timedelta(days=1):
-#                     current_seq += 1
-#                 else:
-#                     current_seq = 1
-#                 sequence.append(current_seq)
-#         return sequence
-#
-#     # Sort the dataframe by 'ezyvetPetIDs' and 'eventDate'
-#     df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
-#
-#     df_refused['MissedPayments'] = assign_sequence(df_refused)
-#
-#     # st.title("Sorted payments with label")
-#     # st.dataframe(df_refused)
-#
-#
-#     # Update 'type' column based on 'MissedPayments'
-#     df_refused['type'] = df_refused.apply(lambda row: 'SUSPENDED ACCOUNT' if row['MissedPayments'] >= 8 else
-#     f"Missed Payment {row['MissedPayments']} - £{row['amount']}" if 1 <= row['MissedPayments'] < 8 else None, axis=1)
-#     df_refused['amount'] = 0
-#
-#     # st.header('refused with sequence number')
-#     # st.dataframe(df_refused)
-#
-#     # Drop duplicate 'adyenReference' in df_refused
-#     df_refused = df_refused.drop_duplicates(subset='adyenReference')
-#
-#     # Merge df with df_refused to update 'type' and 'amount'
-#     df = df.merge(df_refused[['adyenReference', 'type', 'amount']], on='adyenReference', how='left',
-#                   suffixes=('', '_refused'))
-#     df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
-#
-#     # Update 'type' and 'amount' only where there are values from df_refused
-#     df['type'] = df['type_refused'].combine_first(df['type'])
-#     df['amount'] = df['amount_refused'].combine_first(df['amount'])
-#
-#     # Drop the temporary columns
-#     df = df.drop(columns=['type_refused', 'amount_refused'])
-#
-#     # st.header('Merged df - are amounts 0')
-#     # st.dataframe(df)
-#
-#     df.loc[df['adyenEvent'] == 'REFUND', 'amount'] *= -1
-#
-#     # Grouping and adding sums, and renaming columns in one go
-#     df = df.assign(
-#         tl_ID=df["veraReference"],
-#         tl_Date=df["eventDate"],
-#         tl_CustomerID=df["ezyvetContactId"],
-#         tl_CustomerName="",
-#         tl_PetID=df["ezyvetPetIDs"],
-#         tl_PetName="",
-#         tl_Cost=0,
-#         tl_Discount=0,
-#         tl_Revenue=df["amount"],
-#         tl_Event=df["type"],
-#         tl_Comment=(
-#                 df['xeroReference'].fillna('') + " " +
-#                 df['paymentLinkId'].fillna('') + " " +
-#                 df['remark'].fillna(''))
-#         )
-#
-#
-#     payments = df[[
-#         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
-#         "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event","tl_Comment"
-#     ]]
-#
-#     payments.loc[:, 'tl_CustomerID'] = payments['tl_CustomerID'].apply(normalize_id)
-#     payments.loc[:, 'tl_PetID'] = payments['tl_PetID'].apply(normalize_id)
-#
-#     # st.header('output DF')
-#     # st.dataframe(payments)
-#
-#     # return the aggregated DataFrame
-#     return payments
 
-# def extract_tl_Payments_bk():
-#     filename_prefix = "payment-history-"
-#
-#     # load data into df
-#     df = load_newest_file(filename_prefix)
-#
-#     # formatting datatypes
-#     df["ezyvetPetIDs"] = df["ezyvetPetIDs"].astype(str)
-#     df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
-#     df["cardDetails_lastFour"] = df["cardDetails_lastFour"].astype(str)
-#     df['amount'] = df['amount'].astype(float).round(2) / 100
-#     df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
-#     df["eventDate"] = df["eventDate"].dt.strftime('%Y-%m-%d')
-#
-#     # st.header('pre-split DF')
-#     # st.dataframe(df)
-#
-#     # splitting multipet payments
-#     # Add new column 'PetsInSubscription' with the number of pet IDs in 'ezyvetPetIDs'
-#     df['PetsInSubscription'] = df['ezyvetPetIDs'].apply(lambda x: x.count(',') + 1)
-#
-#     # Split rows with multiple pet IDs into separate rows
-#     df['ezyvetPetIDs'] = df['ezyvetPetIDs'].str.split(',')
-#     df = df.explode('ezyvetPetIDs')
-#
-#     # st.header('post-split DF')
-#     # st.dataframe(df)
-#
-#     # Identifying number of failed payments in a row
-#     # Create a subset where status is 'Refused'
-#     df_refused = df[df['status'] == 'Refused']
-#
-#     # Sort df_refused by 'ezyvetPetIDs' and 'eventDate'
-#     df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
-#
-#     # Add new column 'MissedPayments' with the sequence number for each 'ezyvetPetIDs'
-#     def assign_sequence(df):
-#         sequence = []
-#         current_seq = 1
-#         for i in range(len(df)):
-#             if i == 0:
-#                 sequence.append(current_seq)
-#             else:
-#                 if df['ezyvetPetIDs'][i] == df['ezyvetPetIDs'][i - 1] and pd.to_datetime(
-#                         df['eventDate'][i]) == pd.to_datetime(df['eventDate'][i - 1]) + pd.Timedelta(days=1):
-#                     current_seq += 1
-#                 else:
-#                     current_seq = 1
-#                 sequence.append(current_seq)
-#         return sequence
-#
-#     # Sort the dataframe by 'ezyvetPetIDs' and 'eventDate'
-#     df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
-#
-#     df_refused['MissedPayments'] = assign_sequence(df_refused)
-#
-#     # st.title("Sorted payments with label")
-#     # st.dataframe(df_refused)
-#
-#
-#     # Update 'type' column based on 'MissedPayments'
-#     df_refused['type'] = df_refused.apply(lambda row: 'SUSPENDED ACCOUNT' if row['MissedPayments'] >= 8 else
-#     f"Missed Payment {row['MissedPayments']} - £{row['amount']}" if 1 <= row['MissedPayments'] < 8 else None, axis=1)
-#     df_refused['amount'] = 0
-#
-#     # st.header('refused with sequence number')
-#     # st.dataframe(df_refused)
-#
-#     # Drop duplicate 'adyenReference' in df_refused
-#     df_refused = df_refused.drop_duplicates(subset='adyenReference')
-#
-#     # Merge df with df_refused to update 'type' and 'amount'
-#     df = df.merge(df_refused[['adyenReference', 'type', 'amount']], on='adyenReference', how='left',
-#                   suffixes=('', '_refused'))
-#     df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
-#
-#     # Update 'type' and 'amount' only where there are values from df_refused
-#     df['type'] = df['type_refused'].combine_first(df['type'])
-#     df['amount'] = df['amount_refused'].combine_first(df['amount'])
-#
-#     # Drop the temporary columns
-#     df = df.drop(columns=['type_refused', 'amount_refused'])
-#
-#     # st.header('Merged df - are amounts 0')
-#     # st.dataframe(df)
-#
-#     df.loc[df['adyenEvent'] == 'REFUND', 'amount'] *= -1
-#
-#     # Grouping and adding sums, and renaming columns in one go
-#     df = df.assign(
-#         tl_ID=df["veraReference"],
-#         tl_Date=df["eventDate"],
-#         tl_CustomerID=df["ezyvetContactId"],
-#         tl_CustomerName="",
-#         tl_PetID=df["ezyvetPetIDs"],
-#         tl_PetName="",
-#         tl_Cost=0,
-#         tl_Discount=0,
-#         tl_Revenue=df["amount"],
-#         tl_Event=df["type"],
-#         tl_Comment=(
-#                 df['xeroReference'].fillna('') + " " +
-#                 df['paymentLinkId'].fillna('') + " " +
-#                 df['remark'].fillna(''))
-#         )
-#
-#
-#     payments = df[[
-#         "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
-#         "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event","tl_Comment"
-#     ]]
-#
-#     payments.loc[:, 'tl_CustomerID'] = payments['tl_CustomerID'].apply(normalize_id)
-#     payments.loc[:, 'tl_PetID'] = payments['tl_PetID'].apply(normalize_id)
-#
-#     # Load pet details
-#     pet_details_df = get_ezyvet_pet_details()
-#     pet_details_df.loc[:, 'Animal Code'] = pet_details_df['Animal Code'].apply(normalize_id)
-#
-#     payments = payments.merge(
-#         pet_details_df[['Animal Code', 'Animal Name', 'Owner Contact Code', 'Owner Last Name', 'Owner First Name']],
-#         how='left',
-#         left_on='tl_PetID',
-#         right_on='Animal Code')
-#
-#     payments['tl_CustomerName'] = payments['Owner First Name'] +" " + payments['Owner Last Name']
-#     payments['tl_PetName'] = payments['Animal Name']
-#
-#
-#     # Drop all columns after 'tl_Comment'
-#     payments = payments.loc[:, :'tl_Comment']
-#
-#     # st.header('output DF')
-#     # st.dataframe(payments)
-#     # return the aggregated DataFrame
-#     return payments
-
-def extract_tl_Payments():
+def extract_tl_Payments_old():
     filename_prefix = "payment-history-"
 
     # load data into df
@@ -1623,6 +1366,185 @@ def extract_tl_Payments():
     # st.dataframe(payments)
     # return the aggregated DataFrame
     return payments
+
+def extract_tl_Payments():
+    filename_prefix = "payment-history-"
+    with st.spinner('Loading and processing payment history...'):
+        print("Processing payment lines... ")
+
+        # load data into df
+        df = load_newest_file(filename_prefix)
+        # formatting datatypes
+        df["ezyvetPetIDs"] = df["ezyvetPetIDs"].astype(str)
+        df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
+        df["cardDetails_lastFour"] = df["cardDetails_lastFour"].astype(str)
+        # df['amount'] = df['amount'].astype(float).round(2) / 100
+        df["eventDate"] = pd.to_datetime(df["eventDate"], utc=True)
+        df['eventDate'] = df['eventDate'].dt.date
+
+        # drop unnecessary columns
+        df = df.drop(columns=['veraPetIDs'])
+    with st.spinner('Splitting multi-pet accounts...'):
+        # splitting multipet payments
+        # Add new column 'PetsInSubscription' with the number of pet IDs in 'ezyvetPetIDs'
+        df['PetsInSubscription'] = df['ezyvetPetIDs'].apply(lambda x: x.count(',') + 1)
+
+        # st.dataframe(df)
+
+        # Split rows with multiple pet IDs into separate rows
+        df['ezyvetPetIDs'] = df['ezyvetPetIDs'].str.split(',')
+        df = df.explode('ezyvetPetIDs')
+        df.info()
+
+        # st.dataframe(df)
+
+        df = df.reset_index(drop=True)
+        df.loc[df['PetsInSubscription'] > 1, 'amount'] = df['totalAmount'] / df['PetsInSubscription']
+        st.dataframe(df)
+
+    with st.spinner('Removing test accounts...'):
+        # remove test accounts
+        test_pets = get_test_pets()
+        # Drop rows from merged_df where "ezyvetPetIDs" is present in "eV_Pet_ID" of test_pets
+        df = df[~df["ezyvetPetIDs"].isin(test_pets["eV_Pet_ID"])]
+        print ("Test pets removed from payments")
+        # st.header('post-split DF')
+    with st.spinner('Identifying and labelling failed payments...'):
+        # Identifying number of failed payments in a row
+        # Create a subset where status is 'Refused'
+        df_refused = df[df['status'] == 'Refused']
+
+        # Sort df_refused by 'ezyvetPetIDs' and 'eventDate'
+        df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
+
+        # Add new column 'MissedPayments' with the sequence number for each 'ezyvetPetIDs'
+        def assign_sequence(df):
+            sequence = []
+            current_seq = 1
+            for i in range(len(df)):
+                if i == 0:
+                    sequence.append(current_seq)
+                else:
+                    if df['ezyvetPetIDs'][i] == df['ezyvetPetIDs'][i - 1] and pd.to_datetime(
+                            df['eventDate'][i]) == pd.to_datetime(df['eventDate'][i - 1]) + pd.Timedelta(days=1):
+                        current_seq += 1
+                    else:
+                        current_seq = 1
+                    sequence.append(current_seq)
+            return sequence
+
+        # Sort the dataframe by 'ezyvetPetIDs' and 'eventDate'
+        df_refused = df_refused.sort_values(by=['ezyvetPetIDs', 'eventDate']).reset_index(drop=True)
+
+        df_refused['MissedPayments'] = assign_sequence(df_refused)
+
+        # st.title("Sorted payments with label")
+        # st.dataframe(df_refused)
+
+
+        # Update 'type' column based on 'MissedPayments'
+        df_refused['type'] = df_refused.apply(lambda row: 'SUSPENDED ACCOUNT' if row['MissedPayments'] >= 8 else
+        f"Missed Payment {row['MissedPayments']} - £{row['amount']}" if 1 <= row['MissedPayments'] < 8 else None, axis=1)
+        df_refused['amount'] = 0
+
+        # st.header('refused with sequence number')
+        # st.dataframe(df_refused)
+
+        # Drop duplicate 'adyenReference' in df_refused
+        df_refused = df_refused.drop_duplicates(subset='adyenReference')
+
+        # Merge df with df_refused to update 'type' and 'amount'
+        df = df.merge(df_refused[['adyenReference', 'type', 'amount']], on='adyenReference', how='left',
+                      suffixes=('', '_refused'))
+        df["ezyvetContactId"] = df["ezyvetContactId"].astype(str)
+
+        # Update 'type' and 'amount' only where there are values from df_refused
+        df['type'] = df['type_refused'].combine_first(df['type'])
+        df['amount'] = df['amount_refused'].combine_first(df['amount'])
+
+        # Drop the temporary columns
+        df = df.drop(columns=['type_refused', 'amount_refused'])
+
+    with st.spinner('Processing refunds...'):
+        # st.header('Merged df - are amounts 0')
+        # st.dataframe(df)
+
+        df.loc[df['adyenEvent'] == 'REFUND', 'amount'] *= -1
+
+        # Grouping and adding sums, and renaming columns in one go
+        df = df.assign(
+            tl_ID=df["veraReference"],
+            tl_Date=df["eventDate"],
+            tl_CustomerID=df["ezyvetContactId"],
+            tl_CustomerName="",
+            tl_PetID=df["ezyvetPetIDs"],
+            tl_PetName="",
+            tl_Cost=0,
+            tl_Discount=0,
+            tl_Revenue=df["amount"],
+            tl_Event=df["type"],
+            tl_Comment=(
+                    df['xeroReference'].fillna('') + " " +
+                    df['paymentLinkId'].fillna('') + " " +
+                    df['remark'].fillna(''))
+            )
+        df.info()
+
+        payments = df[[
+            "tl_ID", "tl_Date", "tl_CustomerID", "tl_CustomerName", "tl_PetID",
+            "tl_PetName", "tl_Cost", "tl_Discount", "tl_Revenue", "tl_Event","tl_Comment"
+        ]]
+
+
+
+        payments.loc[:, 'tl_CustomerID'] = payments['tl_CustomerID'].apply(normalize_id)
+        payments.loc[:, 'tl_PetID'] = payments['tl_PetID'].apply(normalize_id)
+    with st.spinner('Adding pet details...'):
+        # Load pet details
+        pet_details_df = get_ezyvet_pet_details()
+        pet_details_df.loc[:, 'Animal Code'] = pet_details_df['Animal Code'].apply(normalize_id)
+
+        payments = payments.merge(
+            pet_details_df[['Animal Code', 'Animal Name', 'Owner Contact Code', 'Owner Last Name', 'Owner First Name']],
+            how='left',
+            left_on='tl_PetID',
+            right_on='Animal Code')
+
+        payments['tl_CustomerName'] = payments['Owner First Name'] +" " + payments['Owner Last Name']
+        payments['tl_PetName'] = payments['Animal Name']
+        print("Converting tl_Date to date format!")
+        payments['tl_Date'] = pd.to_datetime(payments['tl_Date'])
+
+        # Drop all columns after 'tl_Comment'
+        payments = payments.loc[:, :'tl_Comment']
+
+        # st.header('output DF')
+        # st.dataframe(payments)
+        # return the aggregated DataFrame
+    with st.spinner('Adding PetCare Plan...'):
+        payments = add_petcareplan_to_payments(payments)
+        # print(payments.info())
+        # st.dataframe(payments)
+
+        return payments
+
+def add_petcareplan_to_payments(payments_df):
+    petcare_plans = load_petcare_plans()
+
+    print("Adding petcare plan id to payments... ")
+
+    # Create a lookup function to get the product code from petcare_plans
+    def lookup_petcare_plan(tl_PetID):
+        matching_row = petcare_plans[petcare_plans['EvPetId'] == tl_PetID]
+        if not matching_row.empty:
+            return matching_row['ProductCode'].values[0]
+        return "Plan not in VERA"
+
+    # Apply the lookup function to each row in payments
+    payments_df['petcare_plan_in_vera'] = payments_df['tl_PetID'].apply(lookup_petcare_plan)
+
+    return payments_df
+
 
 def extract_tl_pet_data_death():
     filename_prefix = "Animals_Report-"
