@@ -4,9 +4,6 @@ import functions
 
 app_name = functions.set_page_definitition()
 
-if not functions.check_password():
-    st.stop()  # Do not continue if check_password is not True.
-
 
 # ----------------------------------------------------
 # defining session states

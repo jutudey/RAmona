@@ -11,6 +11,7 @@ from datetime import datetime
 import hmac
 from io import BytesIO
 import zipfile
+import functions as functions
 
 #----------------------------------------------------
 # Housekeeping
@@ -25,6 +26,9 @@ def set_page_definitition():
     # Enable wide mode and set light theme and add tab icon
     st.set_page_config(layout="wide", page_title=app_name, page_icon=icon, initial_sidebar_state="expanded")
     # st.set_page_config(layout="wide", page_title=app_name, page_icon=":material/sound_detection_dog_barking:", initial_sidebar_state="expanded")
+
+    if not functions.check_password():
+        st.stop()  # Do not continue if check_password is not True.
 
     return app_name
 
