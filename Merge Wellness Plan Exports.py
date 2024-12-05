@@ -33,4 +33,4 @@ merged_df.to_csv(f"data/evWellnessPlans-{date_stamp}.csv", index=False)
 duplicates_df.to_csv(f"data/evWellnessPlans_duplicates_{date_stamp}.csv", index=False)
 
 print(f"CSV files merged successfully into 'data/evWellnessPlans-{date_stamp}.csv'")
-print(f"Duplicates saved into 'data/evWellnessPlans_duplicates_{date_stamp}.csv'")
+print(f"Duplicates saved into 'duplicates/evWellnessPlans_duplicates_{date_stamp}.csv'")
