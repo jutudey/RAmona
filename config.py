@@ -4,7 +4,7 @@
 
 data_folder = 'data'
 
-app_name = "RAmona v0.2"
+app_name = "RAmona v0.3"
 
 required_files_description = [['ezyVet Invoice Lines',
                                    'Invoice Lines Report',
