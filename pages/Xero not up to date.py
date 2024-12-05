@@ -41,7 +41,7 @@ df3 = df3.merge(df1, left_on='Invoice Reference', right_on='id', how='left').set
 # If you don't need the 'id' column from df2 in df3, you can drop it
 # df3.drop('id', axis=1, inplace=True)
 
-st.dataframe(df3)
+# st.dataframe(df3)
 # st.dataframe(df3[['Invoice ID', 'Invoice Date','< 1 Month', '1 Month', '2 Months', '3 Months', 'Older', 'Total', "Adyen Status", "merchantReference"]])
 # ])
 # st.write(len(df3))
@@ -115,6 +115,7 @@ st.dataframe(df3[['Invoice Number', 'Invoice Date',
 st.write(f"Total number of invoices: {len(df3)}")
 # show the total amount in the total column
 st.write(f"Total amount: £{df3['Total'].sum():,.2f}")
+
 
 
 # # Display the selected row(s)

@@ -2,6 +2,9 @@ import streamlit as st
 import functions
 
 
+if not functions.check_password():
+    st.stop()  # Do not continue if check_password is not True.
+
 app_name = functions.set_page_definitition()
 
 

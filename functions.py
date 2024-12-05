@@ -8,7 +8,7 @@ import re
 import os
 import datetime
 from datetime import datetime
-import zipfile
+import hmac
 from io import BytesIO
 import zipfile
 
@@ -155,6 +155,30 @@ def get_test_pets():
     df = pd.read_csv('reference_data/test_pets.csv')
     df["eV_Pet_ID"] = df["eV_Pet_ID"].astype(str)
     return df
+
+def check_password():
+    """Returns `True` if the user had the correct password."""
+
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if hmac.compare_digest(st.session_state["password"], st.secrets["password"]):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # Don't store the password.
+        else:
+            st.session_state["password_correct"] = False
+
+    # Return True if the password is validated.
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # Show input for password.
+    st.text_input(
+        "Password", type="password", on_change=password_entered, key="password"
+    )
+    if "password_correct" in st.session_state:
+        st.error("😕 Password incorrect")
+    return False
+
 
 # Function to normalize the ID
 def normalize_id(id_value):
