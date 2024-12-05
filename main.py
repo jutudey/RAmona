@@ -35,7 +35,7 @@ selected_invoice_no = st.session_state.selected_invoice_no
 
 topPage = "Case Details by Invoice No."
 page1 = "PAYG Invoice Lines"
-page3 = "Adyen Links"
+page3 = "Search in Adyen Links"
 
 
 pages = [topPage, page1, page3]

@@ -1081,10 +1081,11 @@ def get_wellness_plans(pet_id=None):
     # Load existing Wellness Plans
     filename_prefix = "evWellnessPlans-"
     df = load_newest_file(filename_prefix)
+
     df['Wellness Plan Membership Animal Code'] = df['Wellness Plan Membership Animal Code'].apply(normalize_id)
     df['Wellness Plan Membership ID'] = df['Wellness Plan Membership ID'].astype(str)
-    df['Wellness Plan Membership Date'] = pd.to_datetime(df['Wellness Plan Membership Date'], format='%d.%m.%Y')
-    df['Wellness Plan Membership End Date'] = pd.to_datetime(df['Wellness Plan Membership End Date'], format='%d.%m.%Y')
+    df['Wellness Plan Membership Date'] = pd.to_datetime(df['Wellness Plan Membership Date'], format='%d-%m-%Y')
+    df['Wellness Plan Membership End Date'] = pd.to_datetime(df['Wellness Plan Membership End Date'], format='%d-%m-%Y')
 
 
     # Load modified Wellness Plans
@@ -1117,7 +1118,7 @@ def get_wellness_plans(pet_id=None):
     if pet_id:
         wellness_plan_for_pet = df[df['Wellness Plan Membership Animal Code'] == pet_id]
         return wellness_plan_for_pet
-
+    print("returns wellness plans")
     return df
 
 #----------------------------------------------------

@@ -29,8 +29,8 @@ date_stamp = datetime.now().strftime("%Y%m%d")
 
 # Save the merged DataFrame and duplicates DataFrame to new CSV files
 os.makedirs("data", exist_ok=True)
-merged_df.to_csv(f"data/evNonApprovedInvoiceLines-{date_stamp}.csv", index=False)
-duplicates_df.to_csv(f"data/evNonApprovedInvoiceLines_duplicates_{date_stamp}.csv", index=False)
+merged_df.to_csv(f"data/evWellnessPlans-{date_stamp}.csv", index=False)
+duplicates_df.to_csv(f"data/evWellnessPlans_duplicates_{date_stamp}.csv", index=False)
 
 print(f"CSV files merged successfully into 'data/evWellnessPlans-{date_stamp}.csv'")
 print(f"Duplicates saved into 'data/evWellnessPlans_duplicates_{date_stamp}.csv'")
